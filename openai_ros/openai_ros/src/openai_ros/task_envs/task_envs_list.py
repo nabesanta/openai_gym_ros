@@ -16,6 +16,17 @@ def RegisterOpenAI_Ros_Env(task_env, max_episode_steps=10000):
 
     result = True
 
+    # red madoana stuck escaping
+    if task_env == 'RedMadoana-v0':
+
+        register(
+            id=task_env,
+            entry_point='openai_ros.task_envs.turtlebot2.red_Madoana:RedMadoanaEnv',
+            max_episode_steps=max_episode_steps,
+        )
+        # import our training environment
+        from openai_ros.task_envs.turtlebot2 import red_madoana
+
     # Cubli Moving Cube
     if task_env == 'TurtleBot2Maze-v0':
 
