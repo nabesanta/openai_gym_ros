@@ -124,7 +124,7 @@ class ROSLauncher(object):
 
         rospy.logdebug("package_name===>"+str(package_name)+"<===")
 
-        if  package_name == "turtlebot_gazebo":
+        if  package_name == "red_core":
 
                 url_git_1 = "https://bitbucket.org/theconstructcore/turtlebot.git"
                 package_git = [url_git_1]
