@@ -5,6 +5,7 @@ import numpy
 import time
 import qlearn
 from gym import wrappers
+from functools import reduce
 # ROS packages required
 import rospy
 import rospkg

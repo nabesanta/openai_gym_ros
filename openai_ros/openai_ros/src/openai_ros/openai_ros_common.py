@@ -37,7 +37,8 @@ def StartOpenAI_ROS_Environment(task_and_robot_environment_name):
 
 
 class ROSLauncher(object):
-    def __init__(self, rospackage_name, launch_file_name, ros_ws_abspath="/home/michaelpabst2/open_ai_gazebo_custom_model"):
+    # ros_ws_abspathは何でも良い
+    def __init__(self, rospackage_name, launch_file_name, ros_ws_abspath="/home/maedalab/open_ai_gazebo_custom_model"):
 
         self._rospackage_name = rospackage_name
         self._launch_file_name = launch_file_name
@@ -67,16 +68,21 @@ class ROSLauncher(object):
         if pkg_path:
             rospy.loginfo(
                 ">>>>>>>>>>Package found in workspace-->"+str(pkg_path))
+            # pkg_path と "launch"を結合し、pkg_path/launch というパスを作るサンプルプログラム
+            # join_path = os.path.join(pkg_path, "launch")
             launch_dir = os.path.join(pkg_path, "launch")
             path_launch_file_name = os.path.join(launch_dir, launch_file_name)
 
             rospy.logwarn("path_launch_file_name=="+str(path_launch_file_name))
 
+            # ros_ws_abspath = home/maedalab/red_ws
             source_env_command = "source "+ros_ws_abspath+"/devel/setup.bash;"
+            # 
             roslaunch_command = "roslaunch  {0} {1}".format(rospackage_name, launch_file_name)
             command = source_env_command+roslaunch_command
             rospy.logwarn("Launching command="+str(command))
 
+            # 別のファイルを起動するためのもの
             p = subprocess.Popen(command, shell=True)
 
             state = p.poll()
@@ -107,7 +113,7 @@ class ROSLauncher(object):
         sudo pip install gitpython
         """
         commands_to_take_effect = "\nIn a new Shell:::>\ncd "+ros_ws_abspath + \
-            "\ncatkin_make\nsource devel/setup.bash\nrospack profile\n"
+            "\ncatkin build\nsource devel/setup.bash\nrospack profile\n"
         commands_to_take_effect2 = "\nIn your deeplearning program execute shell catkin_ws:::>\ncd /home/user/catkin_ws\nsource devel/setup.bash\nrospack profile\n"
 
         ros_ws_src_abspath_src = os.path.join(ros_ws_abspath, "src")
@@ -117,6 +123,12 @@ class ROSLauncher(object):
         package_to_branch_dict = {}
 
         rospy.logdebug("package_name===>"+str(package_name)+"<===")
+
+        if  package_name == "turtlebot_gazebo":
+
+                url_git_1 = "https://bitbucket.org/theconstructcore/turtlebot.git"
+                package_git = [url_git_1]
+                package_to_branch_dict[url_git_1] = "kinetic-gazebo9"
 
         if  package_name == "turtlebot_gazebo":
 

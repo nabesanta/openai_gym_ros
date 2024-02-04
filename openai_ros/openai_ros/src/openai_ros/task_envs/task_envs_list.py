@@ -21,7 +21,7 @@ def RegisterOpenAI_Ros_Env(task_env, max_episode_steps=10000):
 
         register(
             id=task_env,
-            entry_point='openai_ros.task_envs.turtlebot2.red_Madoana:RedMadoanaEnv',
+            entry_point='openai_ros.task_envs.red.red_Madoana:RedMadoanaEnv',
             max_episode_steps=max_episode_steps,
         )
         # import our training environment
@@ -92,7 +92,7 @@ def GetAllRegisteredGymEnvs():
     return EX: ['Copy-v0', 'RepeatCopy-v0', 'ReversedAddition-v0', ... ]
     """
 
-    all_envs = envs.registry.all()
-    env_ids = [env_spec.id for env_spec in all_envs]
+    all_envs = envs.registry.keys()
+    env_ids = list(all_envs)
 
     return env_ids

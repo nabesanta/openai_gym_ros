@@ -4,7 +4,7 @@ import gym
 import numpy
 import time
 import qlearn
-from gym import wrappers
+from gym.wrappers import RecordVideo
 # ROS packages required
 import rospy
 import rospkg
@@ -13,6 +13,7 @@ from openai_ros.openai_ros_common import StartOpenAI_ROS_Environment
 
 if __name__ == '__main__':
 
+    # ros node
     rospy.init_node('red_madoana_learn',
                     anonymous=True, log_level=rospy.WARN)
 
@@ -20,6 +21,7 @@ if __name__ == '__main__':
     task_and_robot_environment_name = rospy.get_param(
         '/red/task_and_robot_environment_name')
     # 環境の登録
+    # gym.makeによって登録された環境
     env = StartOpenAI_ROS_Environment(
         task_and_robot_environment_name)
     # Create the Gym environment
@@ -30,8 +32,8 @@ if __name__ == '__main__':
     # Set the logging system
     rospack = rospkg.RosPack()
     pkg_path = rospack.get_path('turtlebot2_training')
-    outdir = pkg_path + '/training_results'
-    env = wrappers.Monitor(env, outdir, force=True)
+    outdir = pkg_path + '/training_results/'
+    env = RecordVideo(env, outdir)
     rospy.loginfo("Monitor Wrapper started")
 
     last_time_steps = numpy.ndarray(0)
@@ -39,14 +41,16 @@ if __name__ == '__main__':
     # Loads parameters from the ROS param server
     # Parameters are stored in a yaml file inside the config directory
     # They are loaded at runtime by the launch file
-    Alpha = rospy.get_param("/turtlebot2/alpha")
-    Epsilon = rospy.get_param("/turtlebot2/epsilon")
-    Gamma = rospy.get_param("/turtlebot2/gamma")
-    epsilon_discount = rospy.get_param("/turtlebot2/epsilon_discount")
-    nepisodes = rospy.get_param("/turtlebot2/nepisodes")
-    nsteps = rospy.get_param("/turtlebot2/nsteps")
-
-    running_step = rospy.get_param("/turtlebot2/running_step")
+    # α
+    Alpha = rospy.get_param("/red/alpha")
+    # ε
+    Epsilon = rospy.get_param("/red/epsilon")
+    # γ
+    Gamma = rospy.get_param("/red/gamma")
+    epsilon_discount = rospy.get_param("/red/epsilon_discount")
+    nepisodes = rospy.get_param("/red/nepisodes")
+    nsteps = rospy.get_param("/red/nsteps")
+    running_step = rospy.get_param("/red/running_step")
 
     # Initialises the algorithm that we are going to use for learning
     qlearn = qlearn.QLearn(actions=range(env.action_space.n),
@@ -60,6 +64,7 @@ if __name__ == '__main__':
     for x in range(nepisodes):
         rospy.logdebug("############### WALL START EPISODE=>" + str(x))
 
+        # cumulated_reward: 報酬の積み重ね
         cumulated_reward = 0
         done = False
         if qlearn.epsilon > 0.05:

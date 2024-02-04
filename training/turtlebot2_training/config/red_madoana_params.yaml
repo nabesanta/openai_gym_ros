@@ -5,10 +5,13 @@ red: #namespace
     pos_step: 0.016     # increment in position for each command
     
     #qlearn parameters
+    # α
     alpha: 0.1
-    # 割引率
+    # γ
     gamma: 0.7
+    # ε
     epsilon: 0.9
+
     epsilon_discount: 0.999
     nepisodes: 500
     nsteps: 10000
