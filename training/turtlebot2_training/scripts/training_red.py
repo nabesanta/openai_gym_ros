@@ -4,6 +4,7 @@ import gym
 import numpy
 import time
 import qlearn
+from functools import reduce
 from gym.wrappers import RecordVideo
 # ROS packages required
 import rospy
@@ -62,16 +63,24 @@ if __name__ == '__main__':
 
     # Starts the main training loop: the one about the episodes to do
     for x in range(nepisodes):
+        #~~~ debug ~~~
         rospy.logdebug("############### WALL START EPISODE=>" + str(x))
 
-        # cumulated_reward: 報酬の積み重ね
+        #~~~ cumulated_reward: 報酬の積み重ね ~~~
         cumulated_reward = 0
+        #~~~ done: ステップの終了 ~~~
         done = False
         if qlearn.epsilon > 0.05:
+            #~~~ 割引率を掛けいき, 将来の報酬ほど小さくする ~~~
             qlearn.epsilon *= epsilon_discount
 
-        # Initialize the environment and get first state of the robot
+        # Initialize the gazebo environment and get first state of the robot
+        # ロボットを初期位置に戻す
         observation = env.reset()
+        # join: リス内の要素の結合
+        # >>> v = ["Hello", "Python"]
+        # >>> "".join(v)
+        # 'HelloPython'
         state = ''.join(map(str, observation))
 
         # Show on screen the actual situation of the robot
@@ -83,6 +92,7 @@ if __name__ == '__main__':
             action = qlearn.chooseAction(state)
             rospy.logwarn("Next action is:%d", action)
             # Execute the action in the environment and get feedback
+            # robot_gazebo_env.py
             observation, reward, done, info = env.step(action)
 
             rospy.logwarn(str(observation) + " " + str(reward))

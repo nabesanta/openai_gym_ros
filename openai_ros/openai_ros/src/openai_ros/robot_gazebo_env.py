@@ -1,12 +1,18 @@
 import rospy
 import gym
+import os
 from gym.utils import seeding
+import signal
+import subprocess
 from .gazebo_connection import GazeboConnection
 from .controllers_connection import ControllersConnection
 #https://bitbucket.org/theconstructcore/theconstruct_msgs/src/master/msg/RLExperimentInfo.msg
 from openai_ros.msg import RLExperimentInfo
 
 # https://github.com/openai/gym/blob/master/gym/core.py
+# gym.Envの継承
+# seed, reset, render, close, seedを作成する必要がある
+# https://qiita.com/ohtaman/items/edcb3b0a2ff9d48a7def
 class RobotGazeboEnv(gym.Env):
 
     def __init__(self, robot_name_space, controllers_list, reset_controls, start_init_physics_parameters=True, reset_world_or_sim="SIMULATION"):
@@ -21,7 +27,8 @@ class RobotGazeboEnv(gym.Env):
         # Set up ROS related variables
         self.episode_num = 0
         self.cumulated_episode_reward = 0
-        self.reward_pub = rospy.Publisher('/openai/reward', RLExperimentInfo, queue_size=1)
+        # 報酬値のパブリッシュ
+        self.reward_pub = rospy.Publisher('/red/openai/reward', RLExperimentInfo, queue_size=1)
 
         # We Unpause the simulation and reset the controllers if needed
         """
@@ -32,7 +39,9 @@ class RobotGazeboEnv(gym.Env):
         This has to do with the fact that some plugins with tf, dont understand the reset of the simulation
         and need to be reseted to work properly.
         """
+        # gazeboの停止を解除
         self.gazebo.unpauseSim()
+        # コントローラを解除する
         if self.reset_controls:
             self.controllers_object.reset_controllers()
 
@@ -43,6 +52,7 @@ class RobotGazeboEnv(gym.Env):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
+    #~~~ gazebo上で行動を取らせ, 報酬を獲得し, 積算値を計算する ~~~~
     def step(self, action):
         """
         Function executed each time step.
@@ -58,21 +68,31 @@ class RobotGazeboEnv(gym.Env):
         """
         rospy.logdebug("START STEP OpenAIROS")
 
+        # gzeboの停止を解除
         self.gazebo.unpauseSim()
+        # 行動を取らせる
         self._set_action(action)
+        # gazeboの停止
         self.gazebo.pauseSim()
+        # 状態（観測値）の取得
         obs = self._get_obs()
         done = self._is_done(obs)
         info = {}
+        # 報酬価の獲得
         reward = self._compute_reward(obs, done)
+        # 積算報酬値の計算
         self.cumulated_episode_reward += reward
 
         rospy.logdebug("END STEP OpenAIROS")
 
-        return obs, reward, done, info
+        return obs, reward, done, True, info
 
+    #~~~ 状態の初期化 ~~~
+    # gazebo環境での初期化
     def reset(self):
         rospy.logdebug("Reseting RobotGazeboEnvironment")
+        print("Reseting RobotGazeboEnvironment")
+        # gazebo環境のリセット
         self._reset_sim()
         self._init_env_variables()
         self._update_episode()
@@ -80,15 +100,7 @@ class RobotGazeboEnv(gym.Env):
         rospy.logdebug("END Reseting RobotGazeboEnvironment")
         return obs
 
-    def close(self):
-        """
-        Function executed when closing the environment.
-        Use it for closing GUIS and other systems that need closing.
-        :return:
-        """
-        rospy.logdebug("Closing RobotGazeboEnvironment")
-        rospy.signal_shutdown("Closing RobotGazeboEnvironment")
-
+    #~~~ エピソードの更新 ~~~
     def _update_episode(self):
         """
         Publishes the cumulated reward of the episode and
@@ -96,16 +108,19 @@ class RobotGazeboEnv(gym.Env):
         :return:
         """
         rospy.logwarn("PUBLISHING REWARD...")
+        # 積算報酬値とエピソード数をpublish
         self._publish_reward_topic(
                                     self.cumulated_episode_reward,
                                     self.episode_num
                                     )
         rospy.logwarn("PUBLISHING REWARD...DONE="+str(self.cumulated_episode_reward)+",EP="+str(self.episode_num))
 
+        # reset後, エピソード数と積算報酬値を所望の値にする
+        # エピソード数は+1, 積算値は0
         self.episode_num += 1
         self.cumulated_episode_reward = 0
 
-
+    #~~~ トピックのパブリッシュ ~~~
     def _publish_reward_topic(self, reward, episode_number=1):
         """
         This function publishes the given reward in the reward topic for
@@ -115,17 +130,60 @@ class RobotGazeboEnv(gym.Env):
         :return:
         """
         reward_msg = RLExperimentInfo()
+        # int32
         reward_msg.episode_number = episode_number
+        # float32
         reward_msg.episode_reward = reward
         self.reward_pub.publish(reward_msg)
 
+    #~~~ レンダリング処理 ~~~
+    def _render(self, mode="human", close=False):
+
+        if close:
+            tmp = os.popen("ps -Af").read()
+            proccount = tmp.count('gzclient')
+            if proccount > 0:
+                if self.gzclient_pid != 0:
+                    os.kill(self.gzclient_pid, signal.SIGTERM)
+                    os.wait()
+            return
+
+        tmp = os.popen("ps -Af").read()
+        proccount = tmp.count('gzclient')
+        if proccount < 1:
+            subprocess.Popen("gzclient")
+            self.gzclient_pid = int(subprocess.check_output(["pidof","-s","gzclient"]))
+        else:
+            self.gzclient_pid = 0
+
+    def _close(self):
+
+        # Kill gzclient, gzserver and roscore
+        tmp = os.popen("ps -Af").read()
+        gzclient_count = tmp.count('gzclient')
+        gzserver_count = tmp.count('gzserver')
+        roscore_count = tmp.count('roscore')
+        rosmaster_count = tmp.count('rosmaster')
+
+        if gzclient_count > 0:
+            os.system("killall -9 gzclient")
+        if gzserver_count > 0:
+            os.system("killall -9 gzserver")
+        if rosmaster_count > 0:
+            os.system("killall -9 rosmaster")
+        if roscore_count > 0:
+            os.system("killall -9 roscore")
+
+        if (gzclient_count or gzserver_count or roscore_count or rosmaster_count >0):
+            os.wait()
+
     # Extension methods
     # ----------------------------
-
     def _reset_sim(self):
         """Resets a simulation
         """
         rospy.logdebug("RESET SIM START")
+        # コントローラをリセットするかどうか
         if self.reset_controls :
             rospy.logdebug("RESET CONTROLLERS")
             self.gazebo.unpauseSim()

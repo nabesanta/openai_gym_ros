@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import gym
 from .task_envs.task_envs_list import RegisterOpenAI_Ros_Env
 import roslaunch
@@ -23,9 +23,12 @@ def StartOpenAI_ROS_Environment(task_and_robot_environment_name):
     """
     rospy.logwarn("Env: {} will be imported".format(
         task_and_robot_environment_name))
+    
+    #~~~ ros環境の登録 ~~~
     result = RegisterOpenAI_Ros_Env(task_env=task_and_robot_environment_name,
                                     max_episode_steps=10000)
 
+    #~~~ 環境が登録されたらgym.makeで環境の呼び出し
     if result:
         rospy.logwarn("Register of Task Env went OK, lets make the env..."+str(task_and_robot_environment_name))
         env = gym.make(task_and_robot_environment_name)
@@ -35,17 +38,22 @@ def StartOpenAI_ROS_Environment(task_and_robot_environment_name):
 
     return env
 
-
+#~~~ roslaunchの起動 ~~~
+# launchファイルの起動はすべてこのクラスで行われる
 class ROSLauncher(object):
     # ros_ws_abspathは何でも良い
-    def __init__(self, rospackage_name, launch_file_name, ros_ws_abspath="/home/maedalab/open_ai_gazebo_custom_model"):
+    def __init__(self, rospackage_name, launch_file_name, ros_ws_abspath="/home/maedalab/red_RL"):
 
+        #~~~ パッケージ名とlaunchファイル名を格納 ~~~
+        # rospackage_name：robot_simulation
+        # launch_file_name: start_red_madoana.launch
         self._rospackage_name = rospackage_name
         self._launch_file_name = launch_file_name
 
+        #~~~ rosのパッケージ取得 ~~~ 
         self.rospack = rospkg.RosPack()
 
-        # Check Package Exists
+        #~~~ Check Package Exists ~~~
         try:
             pkg_path = self.rospack.get_path(rospackage_name)
             rospy.logdebug("Package FOUND...")
@@ -54,7 +62,7 @@ class ROSLauncher(object):
             pkg_path = self.DownloadRepo(package_name=rospackage_name,
                                          ros_ws_abspath=ros_ws_abspath)
 
-        # Now we check that the Package path is inside the ros_ws_abspath
+        #~~~ Now we check that the Package path is inside the ros_ws_abspath ~~~
         # This is to force the system to have the packages in that ws, and not in another.
         if ros_ws_abspath in pkg_path:
             rospy.logdebug("Package FOUND in the correct WS!")
@@ -68,22 +76,24 @@ class ROSLauncher(object):
         if pkg_path:
             rospy.loginfo(
                 ">>>>>>>>>>Package found in workspace-->"+str(pkg_path))
-            # pkg_path と "launch"を結合し、pkg_path/launch というパスを作るサンプルプログラム
+            #~~~ pkg_path と "launch"を結合し、pkg_path/launchを作成 ~~~
             # join_path = os.path.join(pkg_path, "launch")
+            # launchディレクトリの作成
             launch_dir = os.path.join(pkg_path, "launch")
+            # pkg_path/launch/~.launch
             path_launch_file_name = os.path.join(launch_dir, launch_file_name)
 
+            #~~~ 作成されたか確認 ~~~
             rospy.logwarn("path_launch_file_name=="+str(path_launch_file_name))
 
-            # ros_ws_abspath = home/maedalab/red_ws
-            source_env_command = "source "+ros_ws_abspath+"/devel/setup.bash;"
-            # 
+            #~~~ source コマンド, ros_ws_abspath = home/maedalab/red_RL ~~~
+            source_env_command = "source "+ros_ws_abspath+"/devel/setup.bash;" 
             roslaunch_command = "roslaunch  {0} {1}".format(rospackage_name, launch_file_name)
-            command = source_env_command+roslaunch_command
+            command = source_env_command + roslaunch_command
             rospy.logwarn("Launching command="+str(command))
 
-            # 別のファイルを起動するためのもの
-            p = subprocess.Popen(command, shell=True)
+            #~~~ sourceコマンドとlaunchファイルを起動 ~~~
+            p = subprocess.Popen(command, shell=True, executable='/bin/bash')
 
             state = p.poll()
             if state is None:
@@ -100,13 +110,14 @@ class ROSLauncher(object):
             self.launch.start()
             """
 
-
+            #~~~ launchファイルの起動確認 ~~~ 
             rospy.loginfo(">>>>>>>>>STARTED Roslaunch-->" +
                           str(self._launch_file_name))
         else:
             assert False, "No Package Path was found for ROS apckage ==>" + \
                 str(rospackage_name)
 
+    #~~~ リポジトリのダウンロード ~~~
     def DownloadRepo(self, package_name, ros_ws_abspath):
         """
         This has to be installed
@@ -124,11 +135,15 @@ class ROSLauncher(object):
 
         rospy.logdebug("package_name===>"+str(package_name)+"<===")
 
-        if  package_name == "turtlebot_gazebo":
-
-                url_git_1 = "https://bitbucket.org/theconstructcore/turtlebot.git"
+        if  package_name == "robot_simulation":
+                # SSH
+                # url_git_1 = "git@github.com:nabesanta/red_ws.git"
+                # package_git = [url_git_1]
+                # package_to_branch_dict[url_git_1] = "develop"
+                # https
+                url_git_1 = "https://github.com/nabesanta/red_ws.git"
                 package_git = [url_git_1]
-                package_to_branch_dict[url_git_1] = "kinetic-gazebo9"
+                package_to_branch_dict[url_git_1] = "develop"
 
         if  package_name == "turtlebot_gazebo":
 

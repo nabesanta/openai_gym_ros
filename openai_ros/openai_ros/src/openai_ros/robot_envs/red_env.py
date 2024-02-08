@@ -51,9 +51,9 @@ class RedEnv(robot_gazebo_env.RobotGazeboEnv):
         # Variables that we give through the constructor.
         # None in this case
 
-        # We launch the ROSlaunch that spawns the robot into the world
+        #~~~ We launch the ROSlaunch that spawns the robot into the world ~~~
         # red spawn
-        ROSLauncher(rospackage_name="turtlebot_gazebo",
+        ROSLauncher(rospackage_name="robot_simulation",
                     launch_file_name="put_robot_in_world.launch",
                     ros_ws_abspath=ros_ws_abspath)
 
@@ -62,15 +62,13 @@ class RedEnv(robot_gazebo_env.RobotGazeboEnv):
         self.controllers_list = []
 
         # It doesnt use namespace
-        self.robot_name_space = ""
+        self.robot_name_space = "/myrobot_1"
 
         # We launch the init function of the Parent Class robot_gazebo_env.RobotGazeboEnv
         super(RedEnv, self).__init__(controllers_list=self.controllers_list,
                                             robot_name_space=self.robot_name_space,
-                                            reset_controls=False,
-                                            start_init_physics_parameters=False,
-                                            reset_world_or_sim="WORLD")
-
+                                            reset_controls=True,
+                                            start_init_physics_parameters=True)
 
 
 
@@ -80,6 +78,8 @@ class RedEnv(robot_gazebo_env.RobotGazeboEnv):
 
         # We Start all the ROS related Subscribers and publishers
         # red subscriber
+        rospy.Subscriber("/odom", Odometry, self._odom_callback)
+        rospy.Subscriber("/container_1/odom", Odometry, self._container_odom_callback)
         rospy.Subscriber("/imu/data_raw", Imu, self._imu_callback)
         rospy.Subscriber("/pose_gazebo", PoseStamped, self._pose_callback)
         rospy.Subscriber("/three_dist_3d", PoseStamped, self._dist_callback)
@@ -95,7 +95,7 @@ class RedEnv(robot_gazebo_env.RobotGazeboEnv):
     # Methods needed by the RobotGazeboEnv
     # ----------------------------
 
-
+    #~~~ imu, pose, distすべての値が取れているか確認 ~~~
     def _check_all_systems_ready(self):
         """
         Checks that all the sensors, publishers and other simulation systems are
@@ -108,15 +108,45 @@ class RedEnv(robot_gazebo_env.RobotGazeboEnv):
     # CubeSingleDiskEnv virtual methods
     # ----------------------------
 
-    # all
+    #~~~ all ~~~
     def _check_all_sensors_ready(self):
         rospy.logdebug("START ALL SENSORS READY")
+        self._check_odom_ready()
+        self._check_container_odom_ready()
         self._check_imu_ready()
         self._check_pose_ready()
         self._check_dist_ready()
         rospy.logdebug("ALL SENSORS READY")
 
-    # # several sensors
+    #~~~ robot odom ~~~ 
+    def _check_odom_ready(self):
+        self.odom = None
+        rospy.logdebug("Waiting for /odom to be READY...")
+        while self.odom is None and not rospy.is_shutdown():
+            try:
+                self.odom = rospy.wait_for_message("/odom", Odometry, timeout=5.0)
+                rospy.logdebug("Current /odom READY=>")
+
+            except:
+                rospy.logerr("Current /odom not ready yet, retrying for getting odom")
+
+        return self.odom
+
+    #~~~ container odom ~~~ 
+    def _check_container_odom_ready(self):
+        self.container_odom = None
+        rospy.logdebug("Waiting for /odom to be READY...")
+        while self.container_odom is None and not rospy.is_shutdown():
+            try:
+                self.container_odom = rospy.wait_for_message("/container_1/odom", Odometry, timeout=5.0)
+                rospy.logdebug("Current /odom READY=>")
+
+            except:
+                rospy.logerr("Current /odom not ready yet, retrying for getting odom")
+
+        return self.container_odom
+
+    #~~~ imu ready ~~~
     def _check_imu_ready(self):
         self.imu = None
         rospy.logdebug("Waiting for /imu/data_raw to be READY...")
@@ -129,6 +159,7 @@ class RedEnv(robot_gazebo_env.RobotGazeboEnv):
                 rospy.logerr("Current /imu/data_raw not ready yet, retrying for getting imu")
         return self.imu
 
+    #~~~ pose ready ~~~
     def _check_pose_ready(self):
         self.pose = None
         rospy.logdebug("Waiting for /pose_gazebo to be READY...")
@@ -141,6 +172,7 @@ class RedEnv(robot_gazebo_env.RobotGazeboEnv):
                 rospy.logerr("Current /pose_gazebo not ready yet, retrying for getting imu")
         return self.imu
     
+    #~~~ dist ready ~~~
     def _check_dist_ready(self):
         self.dist = None
         rospy.logdebug("Waiting for /three_dist_3d to be READY...")
@@ -154,7 +186,13 @@ class RedEnv(robot_gazebo_env.RobotGazeboEnv):
         return self.imu
 
 
-    # callback function
+    #~~~ callback function ~~~ 
+    def _odom_callback(self, data):
+        self.odom = data
+
+    def _container_odom_callback(self, data):
+        self.container_odom = data
+
     def _imu_callback(self, data):
         self.imu = data
 
@@ -164,7 +202,7 @@ class RedEnv(robot_gazebo_env.RobotGazeboEnv):
     def _dist_callback(self, data):
         self.dist = data
 
-
+    #~~~ check publisher conection ~~~ 
     def _check_publishers_connection(self):
         """
         Checks that all the publishers are working
@@ -182,7 +220,7 @@ class RedEnv(robot_gazebo_env.RobotGazeboEnv):
 
         rospy.logdebug("All Publishers READY")
 
-    # Methods that the TrainingEnvironment will need to define here as virtual
+    #~~~ Methods that the TrainingEnvironment will need to define here as virtual ~~~
     # because they will be used in RobotGazeboEnv GrandParentClass and defined in the
     # TrainingEnvironment.
     # ----------------------------
@@ -215,8 +253,9 @@ class RedEnv(robot_gazebo_env.RobotGazeboEnv):
         """
         raise NotImplementedError()
 
-    # Methods that the TrainingEnvironment will need.
+    #~~~ Methods that the TrainingEnvironment will need. ~~~
     # ----------------------------
+    # move_base: 速度指令値
     def move_base(self, linear_speed, angular_speed, epsilon=0.05, update_rate=10, min_laser_distance=-1):
         """
         It will move the base based on the linear and angular speeds given.
@@ -242,7 +281,7 @@ class RedEnv(robot_gazebo_env.RobotGazeboEnv):
                                         min_laser_distance)
         """
 
-
+    #~~~ 速度指令値が正しく届いたかの確認 ~~~ 
     def wait_until_twist_achieved(self, cmd_vel_value, epsilon, update_rate, min_laser_distance=-1):
         """
         We wait for the cmd_vel twist given to be reached by the robot reading
@@ -274,7 +313,7 @@ class RedEnv(robot_gazebo_env.RobotGazeboEnv):
 
             crashed_into_something = self.has_crashed(min_laser_distance)
 
-            current_odometry = self._check_odom_ready()
+            current_odometry = self._check_imu_ready()
             odom_linear_vel = current_odometry.twist.twist.linear.x
             odom_angular_vel = current_odometry.twist.twist.angular.z
 
@@ -302,6 +341,7 @@ class RedEnv(robot_gazebo_env.RobotGazeboEnv):
 
         return delta_time
 
+    # これって壁にぶつかったかじゃない？
     def has_crashed(self, min_laser_distance):
         """
         It states based on the laser scan if the robot has crashed or not.
@@ -327,30 +367,20 @@ class RedEnv(robot_gazebo_env.RobotGazeboEnv):
                         break
         return robot_has_crashed
 
-
     def get_odom(self):
         return self.odom
-
-    def get_camera_depth_image_raw(self):
-        return self.camera_depth_image_raw
-
-    def get_camera_depth_points(self):
-        return self.camera_depth_points
-
-    def get_camera_rgb_image_raw(self):
-        return self.camera_rgb_image_raw
-
-    def get_laser_scan(self):
-        return self.laser_scan
+    
+    def get_container_odom(self):
+        return self.container_odom
 
     def get_imu(self):
         return self.imu
     
     def get_pose(self):
-        return self.imu
+        return self.pose
     
     def get_dist(self):
-        return self.imu
+        return self.dist
 
     def reinit_sensors(self):
         """

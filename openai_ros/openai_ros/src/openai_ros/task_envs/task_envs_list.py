@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from gym.envs.registration import register
 from gym import envs
 
@@ -21,14 +21,14 @@ def RegisterOpenAI_Ros_Env(task_env, max_episode_steps=10000):
 
         register(
             id=task_env,
-            entry_point='openai_ros.task_envs.red.red_Madoana:RedMadoanaEnv',
+            entry_point='openai_ros.task_envs.red.red_madoana:RedMadoanaEnv',
             max_episode_steps=max_episode_steps,
         )
         # import our training environment
-        from openai_ros.task_envs.turtlebot2 import red_madoana
+        from openai_ros.task_envs.red import red_madoana
 
     # Cubli Moving Cube
-    if task_env == 'TurtleBot2Maze-v0':
+    elif task_env == 'TurtleBot2Maze-v0':
 
         register(
             id=task_env,

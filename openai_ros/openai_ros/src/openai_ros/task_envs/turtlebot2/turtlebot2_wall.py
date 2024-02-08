@@ -191,7 +191,7 @@ class TurtleBot2WallEnv(turtlebot2_env.TurtleBot2Env):
         else:
             rospy.logerr("TurtleBot2 didnt crash at least ==>")
 
-
+            
             current_position = Point()
             current_position.x = observations[-2]
             current_position.y = observations[-1]

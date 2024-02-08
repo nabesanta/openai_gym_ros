@@ -66,6 +66,7 @@ if __name__ == '__main__':
 
         # Initialize the environment and get first state of the robot
         observation = env.reset()
+
         state = ''.join(map(str, observation))
 
         # Show on screen the actual situation of the robot
@@ -77,7 +78,7 @@ if __name__ == '__main__':
             action = qlearn.chooseAction(state)
             rospy.logwarn("Next action is:%d", action)
             # Execute the action in the environment and get feedback
-            observation, reward, done, info = env.step(action)
+            observation, reward, done, nabe, info = env.step(action)
 
             rospy.logwarn(str(observation) + " " + str(reward))
             cumulated_reward += reward

@@ -20,17 +20,20 @@ class RedMadoanaEnv(red_env.RedEnv):
         It will learn how to move around the maze without crashing.
         """
 
+        # ワークスペースの取得
         # This is the path where the simulation files, the Task and the Robot gits will be downloaded if not there
         # This parameter HAS to be set up in the MAIN launch of the AI RL script
         ros_ws_abspath = rospy.get_param("/red/ros_ws_abspath", None)
         assert ros_ws_abspath is not None, "You forgot to set ros_ws_abspath in your yaml file of your main RL script. Set ros_ws_abspath: \'YOUR/SIM_WS/PATH\'"
         assert os.path.exists(ros_ws_abspath), "The Simulation ROS Workspace path "+ros_ws_abspath + \
             " DOESNT exist, execute: mkdir -p "+ros_ws_abspath + \
-            "/src;cd "+ros_ws_abspath+";catkin_make"
+            "/src;cd "+ros_ws_abspath+";catkin build"
 
-        # gazebo world start
-        ROSLauncher(rospackage_name="turtlebot_gazebo",
-                    launch_file_name="start_world_madoana.launch",
+        #~~~ gazebo world start ~~~
+        # openai_ros.openai_ros_common内のROSLauncherを起動
+        # robot_simulation/launch/start_red_madoana.launchは確認済み
+        ROSLauncher(rospackage_name="robot_simulation",
+                    launch_file_name="start_red_madoana.launch",
                     ros_ws_abspath=ros_ws_abspath)
 
         # Load Params from the desired Yaml file

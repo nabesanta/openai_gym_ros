@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy
 from std_srvs.srv import Empty
@@ -30,6 +30,7 @@ class GazeboConnection():
         # We always pause the simulation, important for legged robots learning
         self.pauseSim()
 
+    #~~~ simulationを停止する ~~~
     def pauseSim(self):
         rospy.logdebug("PAUSING service found...")
         paused_done = False
@@ -51,6 +52,7 @@ class GazeboConnection():
 
         rospy.logdebug("PAUSING FINISH")
 
+    #~~~ simulationの一時停止 ~~~ 
     def unpauseSim(self):
         rospy.logdebug("UNPAUSING service found...")
         unpaused_done = False

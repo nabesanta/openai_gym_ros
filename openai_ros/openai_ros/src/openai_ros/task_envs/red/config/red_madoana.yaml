@@ -1,17 +1,21 @@
 red: #namespace
 
     n_actions: 9 # We have 3 actions, Forwards,TurnLeft,TurnRight,Backwards
-    n_observations: 6 # We have 6 different observations
+    # 観測値
+    # IMUの値 + 姿勢値: 9個
+    # ロボットとコンテナの距離: 1個
+    # ロボットの位置: 3個
+    n_observations: 13 # We have 6 different observations
 
     speed_step: 1.0 # Time to wait in the reset phases
 
-    linear_forward_speed_high: 1.0 
-    linear_forward_speed_middle: 0.5
-    linear_forward_speed_low: 0.2
+    linear_forward_speed_high: 2.0
+    linear_forward_speed_middle: 1.5
+    linear_forward_speed_low: 1.0
     linear_turn_speed: 0.05 # Lienare speed when turning
     angular_speed_high: 1.0 # Angular speed when turning Left or Right
-    angular_speed_middle: 0.5 # Angular speed when turning Left or Right
-    angular_speed_low: 0.2 # Angular speed when turning Left or Right
+    angular_speed_middle: 0.8 # Angular speed when turning Left or Right
+    angular_speed_low: 0.5 # Angular speed when turning Left or Right
     # initialize
     init_linear_forward_speed_high: 0.0 # Initial linear speed in which we start each episode
     init_linear_forward_speed_middle: 0.0 # Initial linear speed in which we start each episode
@@ -23,16 +27,15 @@ red: #namespace
 
     new_ranges: 5 # How many laser readings we jump in each observation reading, the bigger the less laser resolution
     min_range: 0.5 # Minimum meters below wich we consider we have crashed
-    max_laser_value: 6 # Value considered Ok, no wall
-    min_laser_value: 0 # Value considered there is an obstacle or crashed
-    
+    max_distance_value: 6 # Value considered Ok, no wall
+    min_distance_value: 0 # Value considered there is an obstacle or crashed
+
     desired_pose:
-      x: 5.0
-      y: 0.0
-      z: 0.0
-    
-    forwards_reward: 5 # Points Given to go forwards
-    turn_reward: 1 # Points Given to turn as action
-    end_episode_points: 200 # Points given when ending an episode
-    
+      x: 5.615
+      y: 0.6319
+      z: 0.4688
+
+    distance_close: 5 # Points Given to rc distance close
+    correct_pose: 1 # Points Given to ロボットの姿勢が正常姿勢
+    end_episode_points: 200 # Points given when ending an episode   
 

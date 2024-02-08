@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+<!-- param -->
+    <!-- ロボットの初期姿勢 -->
+    <arg name="initpos_x1" default="0.0"/>
+    <arg name="initpos_y1" default="0.0"/>
+    <arg name="initpos_z1" default="0.340"/>
+
+<!-- value -->
+    <!-- execution time -->
+    <arg name="HZ_ALL" default="10"/>
+    <!-- robot_param -->
+    <rosparam file="$(find base_control)/config/robot_vel_params.yaml" command="load"/>
+    <rosparam file="$(find base_control)/config/robot.yaml" command="load"/>
+    <!-- robot 1号機-->
+    <arg name="robot1" default="myrobot_1"/>
+    <!-- container 1号機-->
+    <arg name="container1" default="container_1"/>
+    <!-- initial pose -->
+    <arg name="initpos_container_1_x" default="3.0"/>
+    <arg name="initpos_container_1_y" default="0.0"/>
+    <arg name="initpos_container_1_z" default="0.0"/>
+
+    <!-- driver -->
+    <node name="driver4movebase" pkg="base_control" type="driver4movebase" output="screen" />
+
+    <!-- madgwickフィルタ -->
+    <include file="$(find imu_filter_madgwick)/launch/imu_filter_madgwick.launch"/>
+
+    <!-- 姿勢値取得 -->
+    <node name="odom_to_pose_node" pkg="odom_to_pose" type="odom_to_pose_node">
+    <param name="HZ" value="$(arg HZ_ALL)"/>
+    </node>
+
+    <!-- ロボットの位置から距離を計算 -->
+    <!-- 直進スタック検知 -->
+    <node name="odom_to_dist_node" pkg="odom_to_dist" type="odom_to_dist_node" output="screen">
+    <param name="HZ" value="$(arg HZ_ALL)"/>
+    </node>
+
+    <!-- This version uses the openai_ros environments -->
+    <rosparam command="load" file="$(find red_training)/config/red_madoana_params.yaml" />
+    <!-- Launch the training system -->
+    <node pkg="red_training" name="red_madoana" type="training_red.py" output="screen"/>
+
+</launch>
