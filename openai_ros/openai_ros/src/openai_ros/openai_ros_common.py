@@ -135,6 +135,7 @@ class ROSLauncher(object):
 
         rospy.logdebug("package_name===>"+str(package_name)+"<===")
 
+<<<<<<< HEAD
         if  package_name == "robot_simulation":
                 # SSH
                 # url_git_1 = "git@github.com:nabesanta/red_ws.git"
@@ -142,6 +143,11 @@ class ROSLauncher(object):
                 # package_to_branch_dict[url_git_1] = "develop"
                 # https
                 url_git_1 = "https://github.com/nabesanta/red_ws.git"
+=======
+        if  package_name == "red_core":
+
+                url_git_1 = "https://bitbucket.org/theconstructcore/turtlebot.git"
+>>>>>>> a79dd9d703d8d932c2e2def316957ec1d093cf0a
                 package_git = [url_git_1]
                 package_to_branch_dict[url_git_1] = "develop"
 
