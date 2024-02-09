@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 
+import csv
+import pprint
 import gym
 import numpy
 import time
 import qlearn
 from functools import reduce
-from gym.wrappers.monitoring.video_recorder import VideoRecorder
 from gym import wrappers
+# from gym.wrappers.record_video import RecordVideo
 import liveplot
 # ROS packages required
 import rospy
@@ -49,9 +51,8 @@ if __name__ == '__main__':
     # rospkg.RosPack(): rosのパッケージパスの取得
     rospack = rospkg.RosPack()
     pkg_path = rospack.get_path('red_training')
-    outdir = pkg_path + '/training_results/before_training.mp4'
-    video = VideoRecorder(env, outdir)
-    # env = RecordVideo(env, outdir)
+    outdir = pkg_path + '/training_results'
+    # env = RecordVideo(env, './video',  episode_trigger = lambda episode_number: True)
     # env = wrappers.Monitor(env, outdir, force=True)
     plotter = liveplot.LivePlot(outdir)
     rospy.loginfo("Monitor Wrapper started")
@@ -93,8 +94,10 @@ if __name__ == '__main__':
     #~~~ 最も高い報酬格納 ~~~
     highest_reward = 0
 
+
     # start the main training loop: the one about the episodes to do
     for x in range(n_episodes):
+
         #~~~ debug ~~~
         rospy.logdebug("############### WALL START EPISODE=>" + str(x))
 
@@ -179,6 +182,13 @@ if __name__ == '__main__':
         rospy.logerr(("EP: " + str(x + 1) + " - [alpha: " + str(round(qlearn.alpha, 2)) + " - gamma: " + str(
             round(qlearn.gamma, 2)) + " - epsilon: " + str(round(qlearn.epsilon, 2)) + "] - Reward: " + str(
             cumulated_reward) + "     Time: %d:%02d:%02d" % (h, m, s)))
+        
+        # plotter.plot(env)
+
+        with open('/home/maedalab/red_RL/src/openai_gym_ros/robots/red_ws/src/csv/odom_to_dist/data.csv', 'a') as f:
+            writer = csv.writer(f)
+            writer.writerow([cumulated_reward])
+
 
     rospy.loginfo(("\n|" + str(n_episodes) + "|" + str(qlearn.alpha) + "|" + str(qlearn.gamma) + "|" + str(
         initial_epsilon) + "*" + str(epsilon_discount) + "|" + str(highest_reward) + "| PICTURE |"))

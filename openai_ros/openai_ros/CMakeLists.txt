@@ -102,7 +102,7 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  DEPENDS message_runtime rospy gazebo_msgs std_msgs geometry_msgs controller_manager_msgs
+  CATKIN_DEPENDS DEPENDS message_runtime rospy gazebo_msgs std_msgs geometry_msgs controller_manager_msgs
   # system_lib
 )
 
@@ -112,9 +112,6 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(
-# include
-  ${catkin_INCLUDE_DIRS}
-)
+include_directories(include ${catkin_INCLUDE_DIRS})
 
 

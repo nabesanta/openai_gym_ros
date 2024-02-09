@@ -13,6 +13,6 @@ red:
     gamma: 0.7
 
     epsilon_discount: 0.999
-    n_episodes: 500
-    n_steps: 500
+    n_episodes: 3000
+    n_steps: 1500
     running_step: 0.06 # Time for each step

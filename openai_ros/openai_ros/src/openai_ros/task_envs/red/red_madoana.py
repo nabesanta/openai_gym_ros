@@ -352,9 +352,9 @@ class RedMadoanaEnv(red_env.RedEnv):
         # コンテナとの距離が近づいたら報酬を与える
         if not done:
             if (self.last_action == "FORWARDS_HIGH" or self.last_action == "FORWARDS_MIDDLE" or self.last_action == "FORWARDS_LOW"):
-                reward = self.distance_close
+                reward = 0
             else:
-                reward = self.correct_pose
+                reward = 0
 
             # If there has been a decrease in the distance to the desired point, we reward it
             if distance_difference < 0.0:
