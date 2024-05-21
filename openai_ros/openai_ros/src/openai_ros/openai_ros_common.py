@@ -21,12 +21,17 @@ def StartOpenAI_ROS_Environment(task_and_robot_environment_name):
     4) Launches the world launch and the robot spawn.
     5) It will import the Gym Env and Make it.
     """
+    
+    #~~~ ros環境の登録 ~~~
     rospy.logwarn("Env: {} will be imported".format(
-        task_and_robot_environment_name))
+                    task_and_robot_environment_name))
     
     #~~~ ros環境の登録 ~~~
     result = RegisterOpenAI_Ros_Env(task_env=task_and_robot_environment_name,
                                     max_episode_steps=10000)
+
+    #~~~ 登録の可否 ~~~
+    rospy.logwarn("Registration Env: {}".format(result))
 
     #~~~ 環境が登録されたらgym.makeで環境の呼び出し
     if result:
@@ -42,7 +47,7 @@ def StartOpenAI_ROS_Environment(task_and_robot_environment_name):
 # launchファイルの起動はすべてこのクラスで行われる
 class ROSLauncher(object):
     # ros_ws_abspathは何でも良い
-    def __init__(self, rospackage_name, launch_file_name, ros_ws_abspath="/home/maedalab/red_RL"):
+    def __init__(self, rospackage_name, launch_file_name, ros_ws_abspath="/home/nabesanta/red_RL"):
 
         #~~~ パッケージ名とlaunchファイル名を格納 ~~~
         # rospackage_name：robot_simulation
@@ -57,10 +62,11 @@ class ROSLauncher(object):
         try:
             pkg_path = self.rospack.get_path(rospackage_name)
             rospy.logdebug("Package FOUND...")
+            rospy.logwarn("rospackage path: {}".format(pkg_path))
         except rospkg.common.ResourceNotFound:
             rospy.logwarn("Package NOT FOUND, lets Download it...")
             pkg_path = self.DownloadRepo(package_name=rospackage_name,
-                                         ros_ws_abspath=ros_ws_abspath)
+                                        ros_ws_abspath=ros_ws_abspath)
 
         #~~~ Now we check that the Package path is inside the ros_ws_abspath ~~~
         # This is to force the system to have the packages in that ws, and not in another.
@@ -68,9 +74,9 @@ class ROSLauncher(object):
             rospy.logdebug("Package FOUND in the correct WS!")
         else:
             rospy.logwarn("Package FOUND in "+pkg_path +
-                          ", BUT not in the ws="+ros_ws_abspath+", lets Download it...")
+                        ", BUT not in the ws="+ros_ws_abspath+", lets Download it...")
             pkg_path = self.DownloadRepo(package_name=rospackage_name,
-                                         ros_ws_abspath=ros_ws_abspath)
+                                        ros_ws_abspath=ros_ws_abspath)
 
         # If the package was found then we launch
         if pkg_path:
@@ -86,7 +92,7 @@ class ROSLauncher(object):
             #~~~ 作成されたか確認 ~~~
             rospy.logwarn("path_launch_file_name=="+str(path_launch_file_name))
 
-            #~~~ source コマンド, ros_ws_abspath = home/maedalab/red_RL ~~~
+            #~~~ source コマンド, ros_ws_abspath = home/nabesanta/red_RL ~~~
             source_env_command = "source "+ros_ws_abspath+"/devel/setup.bash;" 
             roslaunch_command = "roslaunch  {0} {1}".format(rospackage_name, launch_file_name)
             command = source_env_command + roslaunch_command
@@ -112,7 +118,7 @@ class ROSLauncher(object):
 
             #~~~ launchファイルの起動確認 ~~~ 
             rospy.loginfo(">>>>>>>>>STARTED Roslaunch-->" +
-                          str(self._launch_file_name))
+                            str(self._launch_file_name))
         else:
             assert False, "No Package Path was found for ROS apckage ==>" + \
                 str(rospackage_name)
@@ -163,7 +169,7 @@ class ROSLauncher(object):
 
         else:
             rospy.logerr("Package [ >"+package_name +
-                         "< ] is not supported for autodownload, do it manually into >"+str(ros_ws_abspath))
+                        "< ] is not supported for autodownload, do it manually into >"+str(ros_ws_abspath))
             assert False, "The package "++ \
                 " is not supported, please check the package name and the git support in openai_ros_common.py"
 
@@ -172,7 +178,7 @@ class ROSLauncher(object):
             for git_url in package_git:
                 try:
                     rospy.logdebug("Lets download git="+git_url +
-                                   ", in ws="+ros_ws_src_abspath_src)
+                                    ", in ws="+ros_ws_src_abspath_src)
                     if git_url in package_to_branch_dict:
                         branch_repo_name = package_to_branch_dict[git_url]
                         git.Git(ros_ws_src_abspath_src).clone(git_url,branch=branch_repo_name)
@@ -180,11 +186,11 @@ class ROSLauncher(object):
                         git.Git(ros_ws_src_abspath_src).clone(git_url)
 
                     rospy.logdebug("Download git="+git_url +
-                                   ", in ws="+ros_ws_src_abspath_src+"...DONE")
+                                    ", in ws="+ros_ws_src_abspath_src+"...DONE")
                 except git.exc.GitCommandError as e:
                     rospy.logwarn(str(e))
                     rospy.logwarn("The Git "+git_url+" already exists in " +
-                                  ros_ws_src_abspath_src+", not downloading")
+                                    ros_ws_src_abspath_src+", not downloading")
 
             # We check that the package is there
             try:
@@ -195,7 +201,7 @@ class ROSLauncher(object):
                     rospy.logdebug("Package FOUND in the correct WS!")
                 else:
                     rospy.logwarn("Package FOUND in="+pkg_path +
-                                  ", BUT not in the ws="+ros_ws_abspath)
+                                    ", BUT not in the ws="+ros_ws_abspath)
                     rospy.logerr(
                         "IMPORTANT!: You need to execute the following commands and rerun to dowloads to take effect.")
                     rospy.logerr(commands_to_take_effect)

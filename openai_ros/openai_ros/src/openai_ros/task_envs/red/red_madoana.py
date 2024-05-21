@@ -25,7 +25,7 @@ class RedMadoanaEnv(red_env.RedEnv):
         #~~~ ワークスペースの取得 ~~~
         # This is the path where the simulation files, the Task and the Robot gits will be downloaded if not there
         # This parameter HAS to be set up in the MAIN launch of the AI RL script
-        # ros_ws_abspath: home/maedalab/red_RL
+        # ros_ws_abspath: home/nabesanta/red_RL
         ros_ws_abspath = rospy.get_param("/red/ros_ws_abspath", None)
         assert ros_ws_abspath is not None, "You forgot to set ros_ws_abspath in your yaml file of your main RL script. Set ros_ws_abspath: \'YOUR/SIM_WS/PATH\'"
         assert os.path.exists(ros_ws_abspath), "The Simulation ROS Workspace path "+ros_ws_abspath + \

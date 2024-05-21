@@ -1,18 +1,18 @@
 red: 
     task_and_robot_environment_name: 'RedMadoana-v0'
-    ros_ws_abspath: "/home/maedalab/red_RL"
-    running_step: 0.04 # amount of time the control will be executed
-    pos_step: 0.016     # increment in position for each command
-    
+    ros_ws_abspath: "/home/nabesanta/red_RL"
+    running_step: 0.04   # amount of time the control will be executed
+    pos_step: 0.016   # increment in position for each command
+
     #qlearn parameters
     # α
-    alpha: 0.1
+    alpha: 0.5
     # ε
     epsilon: 0.9
     # γ
-    gamma: 0.7
+    gamma: 0.99
 
     epsilon_discount: 0.999
-    n_episodes: 3000
-    n_steps: 1500
-    running_step: 0.06 # Time for each step
+    n_episodes: 100
+    n_steps: 5000
+    running_step: 0.06   # time for each step

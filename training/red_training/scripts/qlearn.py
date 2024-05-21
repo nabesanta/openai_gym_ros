@@ -14,7 +14,7 @@ class QLearn:
     def learnQ(self, state, action, reward, value):
         '''
         Q-learning:
-            Q(s, a) += alpha * (reward(s,a) + max(Q(s') - Q(s,a))            
+            Q(s, a) += alpha * (reward(s,a) + gamma * max(Q(s') - Q(s,a))            
         '''
         oldv = self.q.get((state, action), None)
         # 報酬の初期値設定
@@ -22,7 +22,7 @@ class QLearn:
             self.q[(state, action)] = reward
         # 状態と行動における価値の更新
         else:
-            self.q[(state, action)] = oldv + self.alpha * (value - oldv)
+            self.q[(state, action)] = oldv + self.alpha * (self.gamma * value - oldv)
 
     # ε-greedy法
     # Q値を最大にする行動を返す

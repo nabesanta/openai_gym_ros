@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import csv
 import pprint
 import gym
@@ -15,7 +14,7 @@ import rospy
 import rospkg
 from openai_ros.openai_ros_common import StartOpenAI_ROS_Environment
 
-#~~~ renderは描画 ~~~ 
+#~~~ rendering ~~~ 
 def render():
     render_skip = 0 #Skip first X episodes.
     render_interval = 50 #Show render Every Y episodes.
@@ -28,7 +27,7 @@ def render():
 
 if __name__ == '__main__':
 
-    #~~~ node ~~~
+    #~~~ ROS node ~~~
     rospy.init_node('red_madoana_learn',
                     anonymous=True, log_level=rospy.WARN)
 
@@ -38,22 +37,29 @@ if __name__ == '__main__':
         '/red/task_and_robot_environment_name')
 
     #~~~ 環境の登録と呼び出し ~~~
-    # gym.makeによって登録された環境
+    # gym.makeによって登録された環境を取得
     env = StartOpenAI_ROS_Environment(
         task_and_robot_environment_name)
 
     #~~~ Create the Gym environment ~~~
-    # rospy.loginfo() = print + time
     rospy.loginfo("Gym environment done")
     rospy.loginfo("Starting Learning")
 
-    #~~~ Set the logging system ~~~s
+    #~~~ Set the logging system ~~~
+    # # rospkgでディレクトリを取得する場合
+    # # rospkg.RosPack(): rosのパッケージパスの取得
+    # rospack = rospkg.RosPack()
+    # pkg_path = rospack.get_path('red_training')
+    # outdir = pkg_path + '/training_results'
+    # # 画面録画
+    # # env = RecordVideo(env, './video',  episode_trigger = lambda episode_number: True)
+    # # env = wrappers.Monitor(env, outdir, force=True)
+    # plotter = liveplot.LivePlot(outdir)
+    # rospy.loginfo("Monitor Wrapper started")
+
+    # 自分でディレクトリを指示する場合
     # rospkg.RosPack(): rosのパッケージパスの取得
-    rospack = rospkg.RosPack()
-    pkg_path = rospack.get_path('red_training')
-    outdir = pkg_path + '/training_results'
-    # env = RecordVideo(env, './video',  episode_trigger = lambda episode_number: True)
-    # env = wrappers.Monitor(env, outdir, force=True)
+    outdir = '~/red_RL/src/openai_gym_ros/results'
     plotter = liveplot.LivePlot(outdir)
     rospy.loginfo("Monitor Wrapper started")
 
@@ -64,28 +70,25 @@ if __name__ == '__main__':
     last_time_steps = numpy.ndarray(0)
 
     #~~~ Loads parameters from the ROS param server ~~~
-    # Parameters are stored in a yaml file inside the config directory
-    # They are loaded at runtime by the launch file
-    # α: 0.1
+    # 学習率α: 0.1
     Alpha = rospy.get_param("/red/alpha")
-    # ε: 0.9
+    # 探査率ε: 0.9
     Epsilon = rospy.get_param("/red/epsilon")
-    # γ: 0.7
+    # 割引率γ: 0.7
     Gamma = rospy.get_param("/red/gamma")
     # ε_dis : 0.999
     epsilon_discount = rospy.get_param("/red/epsilon_discount")
-    # エピソード数: 10000
+    # エピソード数: 100
     n_episodes = rospy.get_param("/red/n_episodes")
-    # ステップ数: 500
+    # ステップ数: 5000
     n_steps = rospy.get_param("/red/n_steps")
     # 1ステップ当たりの時間: 0.06
     running_step = rospy.get_param("/red/running_step")
 
     #~~~ Initialises the algorithm that we are going to use for learning ~~~
     # Q学習のinitialize
-    # python range(): 
     qlearn = qlearn.QLearn(actions=range(env.action_space.n),
-                           epsilon=Epsilon, alpha=Alpha, gamma=Gamma)
+                            epsilon=Epsilon, alpha=Alpha, gamma=Gamma)
     # Q学習のepsilonにアクセス
     initial_epsilon = qlearn.epsilon
 
@@ -93,7 +96,6 @@ if __name__ == '__main__':
     start_time = time.time()
     #~~~ 最も高い報酬格納 ~~~
     highest_reward = 0
-
 
     # start the main training loop: the one about the episodes to do
     for x in range(n_episodes):
@@ -107,16 +109,16 @@ if __name__ == '__main__':
         #~~~ done: ステップの終了 ~~~
         done = False
         if qlearn.epsilon > 0.05:
-            #~~~ 割引率を掛けいき, 将来の報酬ほど小さくする ~~~
+            # 探索率を下げていく
             qlearn.epsilon *= epsilon_discount
 
         #~~~ Initialize the gazebo environment and get first state of the robot ~~~
         # ロボットを初期位置に戻す, 報酬の積算値をトピックとしてpublish
         observation = env.reset()
         # video.capture_frame()
-        # join: リス内の要素の結合
+        # join: リスト内の要素の結合
         # >>> v = ["Hello", "Python"]
-        # >>> "".join(v)
+        # >>> ''.join(v)
         # 'HelloPython'
         # observationはリスト, map関数によってstr型のリストに変換
         state = ''.join(map(str, observation))
@@ -185,7 +187,7 @@ if __name__ == '__main__':
         
         # plotter.plot(env)
 
-        with open('/home/maedalab/red_RL/src/openai_gym_ros/robots/red_ws/src/csv/odom_to_dist/data.csv', 'a') as f:
+        with open('/home/nabesanta/red_RL/src/openai_gym_ros/robots/red_ws/src/csv/odom_to_dist/data.csv', 'a') as f:
             writer = csv.writer(f)
             writer.writerow([cumulated_reward])
 
