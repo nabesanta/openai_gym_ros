@@ -1,210 +1,129 @@
 #!/usr/bin/env python3
+
 import csv
 import pprint
 import gym
 import numpy
 import time
 import qlearn
-from functools import reduce
-from gym import wrappers
-# from gym.wrappers.record_video import RecordVideo
 import liveplot
-# ROS packages required
 import rospy
 import rospkg
+from functools import reduce
+from gym import wrappers
 from openai_ros.openai_ros_common import StartOpenAI_ROS_Environment
 
-#~~~ rendering ~~~ 
 def render():
-    render_skip = 0 #Skip first X episodes.
-    render_interval = 50 #Show render Every Y episodes.
-    render_episodes = 10 #Show Z episodes every rendering.
+    render_skip = 0  # 初めのXエピソードをスキップ
+    render_interval = 50  # Yエピソードごとにレンダリングを表示
+    render_episodes = 10  # レンダリングの際にZエピソードを表示
 
-    if (x%render_interval == 0) and (x != 0) and (x > render_skip):
+    if (x % render_interval == 0) and (x != 0) and (x > render_skip):
         env.render()
-    elif ((x-render_episodes)%render_interval == 0) and (x != 0) and (x > render_skip) and (render_episodes < x):
+    elif ((x - render_episodes) % render_interval == 0) and (x != 0) and (x > render_skip) and (render_episodes < x):
         env.render(close=True)
 
 if __name__ == '__main__':
+    # ノードの初期化
+    rospy.init_node('red_madoana_learn', anonymous=True, log_level=rospy.WARN)
 
-    #~~~ ROS node ~~~
-    rospy.init_node('red_madoana_learn',
-                    anonymous=True, log_level=rospy.WARN)
+    # 強化学習環境の名前取得
+    task_and_robot_environment_name = rospy.get_param('/red/task_and_robot_environment_name')
 
-    #~~~ Init OpenAI_ROS ENV ~~~
-    # task_and_robot_environment_name = 'RedMadoana-v0'
-    task_and_robot_environment_name = rospy.get_param(
-        '/red/task_and_robot_environment_name')
+    # 環境の登録と呼び出し
+    env = StartOpenAI_ROS_Environment(task_and_robot_environment_name)
 
-    #~~~ 環境の登録と呼び出し ~~~
-    # gym.makeによって登録された環境を取得
-    env = StartOpenAI_ROS_Environment(
-        task_and_robot_environment_name)
-
-    #~~~ Create the Gym environment ~~~
-    rospy.loginfo("Gym environment done")
+    rospy.loginfo("Gym environment initialized")
     rospy.loginfo("Starting Learning")
 
-    #~~~ Set the logging system ~~~
-    # # rospkgでディレクトリを取得する場合
-    # # rospkg.RosPack(): rosのパッケージパスの取得
-    # rospack = rospkg.RosPack()
-    # pkg_path = rospack.get_path('red_training')
-    # outdir = pkg_path + '/training_results'
-    # # 画面録画
-    # # env = RecordVideo(env, './video',  episode_trigger = lambda episode_number: True)
-    # # env = wrappers.Monitor(env, outdir, force=True)
-    # plotter = liveplot.LivePlot(outdir)
-    # rospy.loginfo("Monitor Wrapper started")
-
-    # 自分でディレクトリを指示する場合
-    # rospkg.RosPack(): rosのパッケージパスの取得
+    # 画面録画
     outdir = '~/red_RL/src/openai_gym_ros/results'
     plotter = liveplot.LivePlot(outdir)
-    rospy.loginfo("Monitor Wrapper started")
 
-    #~~~ store step numbers ~~~
-    # list: 異なる型を格納可能
-    # 配列array: 同じ型のみ格納, 1次元配列のみ
-    # 多次元配列 numpy.ndarray(np.array): 同じ型のみ格納, 多次元配列
+    # ステップ数の格納変数
     last_time_steps = numpy.ndarray(0)
 
-    #~~~ Loads parameters from the ROS param server ~~~
-    # 学習率α: 0.1
+    # ROSパラメータの読み込み
     Alpha = rospy.get_param("/red/alpha")
-    # 探査率ε: 0.9
     Epsilon = rospy.get_param("/red/epsilon")
-    # 割引率γ: 0.7
     Gamma = rospy.get_param("/red/gamma")
-    # ε_dis : 0.999
     epsilon_discount = rospy.get_param("/red/epsilon_discount")
-    # エピソード数: 100
     n_episodes = rospy.get_param("/red/n_episodes")
-    # ステップ数: 5000
     n_steps = rospy.get_param("/red/n_steps")
-    # 1ステップ当たりの時間: 0.06
     running_step = rospy.get_param("/red/running_step")
 
-    #~~~ Initialises the algorithm that we are going to use for learning ~~~
-    # Q学習のinitialize
-    qlearn = qlearn.QLearn(actions=range(env.action_space.n),
-                            epsilon=Epsilon, alpha=Alpha, gamma=Gamma)
-    # Q学習のepsilonにアクセス
+    # Q学習の初期化
+    qlearn = qlearn.QLearn(actions=range(env.action_space.n), epsilon=Epsilon, alpha=Alpha, gamma=Gamma)
     initial_epsilon = qlearn.epsilon
 
-    #~~~ 学習の開始時間取得 ~~~
+    # 学習の開始時間取得
     start_time = time.time()
-    #~~~ 最も高い報酬格納 ~~~
     highest_reward = 0
 
-    # start the main training loop: the one about the episodes to do
+    # メイントレーニングループの開始
     for x in range(n_episodes):
-
-        #~~~ debug ~~~
-        rospy.logdebug("############### WALL START EPISODE=>" + str(x))
-
-        #~~~ cumulated_reward: 報酬の積み重ね ~~~
+        rospy.logdebug("############### START EPISODE => " + str(x))
         cumulated_reward = 0
-
-        #~~~ done: ステップの終了 ~~~
         done = False
+
+        # 探査率の減少
         if qlearn.epsilon > 0.05:
-            # 探索率を下げていく
             qlearn.epsilon *= epsilon_discount
 
-        #~~~ Initialize the gazebo environment and get first state of the robot ~~~
-        # ロボットを初期位置に戻す, 報酬の積算値をトピックとしてpublish
+        # 環境のリセットと初期状態の取得
         observation = env.reset()
-        # video.capture_frame()
-        # join: リスト内の要素の結合
-        # >>> v = ["Hello", "Python"]
-        # >>> ''.join(v)
-        # 'HelloPython'
-        # observationはリスト, map関数によってstr型のリストに変換
         state = ''.join(map(str, observation))
 
-        # Show on screen the actual situation of the robot
-        # env.render()
-        # for each episode, we test the robot for n_steps
+        # 各エピソードでロボットをn_stepsテスト
         for i in range(n_steps):
-            rospy.logwarn("############### Start Step=>" + str(i))
+            rospy.logwarn("############### Start Step => " + str(i))
 
-            # env.render()
-
-            #~~~ Pick an action based on the current state ~~~
-            # 現在の状態から次に行う適切な行動を抽出する
+            # 現在の状態から次に行う行動を選択
             action = qlearn.chooseAction(state)
-            rospy.logwarn("Next action is:%d", action)
+            rospy.logwarn("Next action is: %d", action)
 
-            #~~~ Execute the action in the environment and get feedback ~~~
-            # robot_gazebo_env.py
-            observation, reward, done, nabe, info = env.step(action)
-
-            #~~~ 観測値と報酬の確認 ~~~
+            # 行動を実行し、フィードバックを取得
+            observation, reward, done, info = env.step(action)
             rospy.logwarn(str(observation) + " " + str(reward))
 
-            #~~~ 積算値を算出, 報酬値の更新 ~~~
+            # 報酬の累積と更新
             cumulated_reward += reward
             if highest_reward < cumulated_reward:
                 highest_reward = cumulated_reward
 
-            #~~~ str型のobservation値を格納する ~~~
             nextState = ''.join(map(str, observation))
 
-            #~~~ Make the algorithm learn based on the results ~~~
-            rospy.logwarn("# state we were=>" + str(state))
-            rospy.logwarn("# action that we took=>" + str(action))
-            rospy.logwarn("# reward that action gave=>" + str(reward))
-            rospy.logwarn("# episode cumulated_reward=>" + str(cumulated_reward))
-            rospy.logwarn("# State in which we will start next step=>" + str(nextState))
-
-            #~~~ Q学習による価値関数の計算 ~~~ 
+            # Q学習による価値関数の計算
             qlearn.learn(state, action, reward, nextState)
 
-            # env._flush(force=True)
-
-            #~~~ 学習の終了を確認する
-            if not (done):
-                rospy.logwarn("NOT DONE")
+            if not done:
                 state = nextState
             else:
-                rospy.logwarn("DONE")
                 last_time_steps = numpy.append(last_time_steps, [int(i + 1)])
                 break
-            rospy.logwarn("############### END Step=>" + str(i))
-            # raw_input("Next Step...PRESS KEY")
-            # rospy.sleep(2.0)
 
-        #~~~ 1エピソードの時間を計算 ~~~
-        # 割り算の商と余りを計算
-        # int(time.time() - start_time) ÷ 60
+            rospy.logwarn("############### END Step => " + str(i))
+
+        # エピソードの時間を計算
         m, s = divmod(int(time.time() - start_time), 60)
-        # m ÷ 60
         h, m = divmod(m, 60)
-        rospy.logerr(("EP: " + str(x + 1) + " - [alpha: " + str(round(qlearn.alpha, 2)) + " - gamma: " + str(
-            round(qlearn.gamma, 2)) + " - epsilon: " + str(round(qlearn.epsilon, 2)) + "] - Reward: " + str(
-            cumulated_reward) + "     Time: %d:%02d:%02d" % (h, m, s)))
-        
-        # plotter.plot(env)
+        rospy.logerr(
+            "EP: {} - [alpha: {:.2f} - gamma: {:.2f} - epsilon: {:.2f}] - Reward: {} - Time: {:02d}:{:02d}:{:02d}".format(
+                x + 1, qlearn.alpha, qlearn.gamma, qlearn.epsilon, cumulated_reward, h, m, s))
 
+        # CSVファイルに報酬を書き込む
         with open('/home/nabesanta/red_RL/src/openai_gym_ros/robots/red_ws/src/csv/odom_to_dist/data.csv', 'a') as f:
             writer = csv.writer(f)
             writer.writerow([cumulated_reward])
 
+    rospy.loginfo("|{}|{}|{}|{}|{}|{}| PICTURE |".format(n_episodes, qlearn.alpha, qlearn.gamma, initial_epsilon,
+                                                            epsilon_discount, highest_reward))
 
-    rospy.loginfo(("\n|" + str(n_episodes) + "|" + str(qlearn.alpha) + "|" + str(qlearn.gamma) + "|" + str(
-        initial_epsilon) + "*" + str(epsilon_discount) + "|" + str(highest_reward) + "| PICTURE |"))
-
-    # np.araay → list に変換
+    # スコアの計算
     l = last_time_steps.tolist()
-    # ソートする
     l.sort()
 
-    # print("Parameters: a="+str)
-    #~~~ 全体の収益を計算 ~~~
-    rospy.loginfo("Overall score: {:0.2f}".format(last_time_steps.mean()))
-    #~~~ スコアの計算 ~~~
-    rospy.loginfo("Best 100 score: {:0.2f}".format(reduce(lambda x, y: x + y, l[-100:]) / len(l[-100:])))
+    rospy.loginfo("Overall score: {:.2f}".format(last_time_steps.mean()))
+    rospy.loginfo("Best 100 score: {:.2f}".format(reduce(lambda x, y: x + y, l[-100:]) / len(l[-100:])))
 
-    # video.close()
     env.close()

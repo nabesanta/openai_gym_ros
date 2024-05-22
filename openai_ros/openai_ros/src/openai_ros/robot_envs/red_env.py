@@ -18,39 +18,8 @@ from openai_ros.openai_ros_common import ROSLauncher
 
 
 class RedEnv(robot_gazebo_env.RobotGazeboEnv):
-    """Superclass for all CubeSingleDisk environments.
-    """
-
     def __init__(self, ros_ws_abspath):
-        """
-        Initializes a new RedEnv environment.
-        Turtlebot2 doesnt use controller_manager, therefore we wont reset the
-        controllers in the standard fashion. For the moment we wont reset them.
-
-        To check any topic we need to have the simulations running, we need to do two things:
-        1) Unpause the simulation: without that th stream of data doesnt flow. This is for simulations
-        that are pause for whatever the reason
-        2) If the simulation was running already for some reason, we need to reset the controlers.
-        This has to do with the fact that some plugins with tf, dont understand the reset of the simulation
-        and need to be reseted to work properly.
-
-        The Sensors: The sensors accesible are the ones considered usefull for AI learning.
-
-        Sensor Topic List:
-        * /odom : Odometry readings of the Base of the Robot
-        * /camera/depth/image_raw: 2d Depth image of the depth sensor.
-        * /camera/depth/points: Pointcloud sensor readings
-        * /camera/rgb/image_raw: RGB camera
-        * /kobuki/laser/scan: Laser Readings
-
-        Actuators Topic List: /cmd_vel,
-
-        Args:
-        """
         rospy.logdebug("Start RedEnv INIT...")
-        # Variables that we give through the constructor.
-        # None in this case
-
         #~~~ We launch the ROSlaunch that spawns the robot into the world ~~~
         # red spawn
         ROSLauncher(rospackage_name="robot_simulation",

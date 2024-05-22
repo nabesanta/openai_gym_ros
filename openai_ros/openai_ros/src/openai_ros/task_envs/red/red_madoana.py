@@ -18,15 +18,10 @@ import os
 # roslaunch robot_simulation start_red_maodoana.launch
 class RedMadoanaEnv(red_env.RedEnv):
     def __init__(self):
-        """
-        This Task Env is designed for having the TurtleBot2 in some kind of maze.
-        It will learn how to move around the maze without crashing.
-        """
         #~~~ ワークスペースの取得 ~~~
-        # This is the path where the simulation files, the Task and the Robot gits will be downloaded if not there
-        # This parameter HAS to be set up in the MAIN launch of the AI RL script
         # ros_ws_abspath: home/nabesanta/red_RL
         ros_ws_abspath = rospy.get_param("/red/ros_ws_abspath", None)
+        # assert文を用いて例外処理
         assert ros_ws_abspath is not None, "You forgot to set ros_ws_abspath in your yaml file of your main RL script. Set ros_ws_abspath: \'YOUR/SIM_WS/PATH\'"
         assert os.path.exists(ros_ws_abspath), "The Simulation ROS Workspace path "+ros_ws_abspath + \
             " DOESNT exist, execute: mkdir -p "+ros_ws_abspath + \
@@ -41,8 +36,8 @@ class RedMadoanaEnv(red_env.RedEnv):
 
         # Load Params from the desired Yaml file
         LoadYamlFileParamsTest(rospackage_name="openai_ros",
-                               rel_path_from_package_to_file="src/openai_ros/task_envs/red/config",
-                               yaml_file_name="red_madoana.yaml")
+                                rel_path_from_package_to_file="src/openai_ros/task_envs/red/config",
+                                yaml_file_name="red_madoana.yaml")
 
         # Here we will add any init functions prior to starting the MyRobotEnv
         super(RedMadoanaEnv, self).__init__(ros_ws_abspath)
@@ -51,13 +46,13 @@ class RedMadoanaEnv(red_env.RedEnv):
         # 行動空間の設定
         # redの行動は9つ: 前進・右旋回・左旋回（高速、中速、低速）
         number_actions = rospy.get_param('/red/n_actions')
+        # gym.spaces.Discrete(n): 範囲[0、n-1]の離散値、Int型の数値
         self.action_space = spaces.Discrete(number_actions)
 
         #~~~ We set the reward range, which is not compulsory but here we do it. ~~~
         # OpenAIのデフォルト値
         self.reward_range = (-np.inf, np.inf)
 
-        #number_observations = rospy.get_param('/turtlebot2/n_observations')
         """
         We set the Observation space for the 10 observations
         cube_observations = [
@@ -136,9 +131,9 @@ class RedMadoanaEnv(red_env.RedEnv):
 
         #~~~ 観測値のhighとlowを設定する ~~~
         low = np.array([-np.inf, -np.inf, -np.inf, -np.inf, -np.inf, -np.inf,
-               -180.0, -180.0, -180.0, -np.inf, -np.inf, -np.inf, -np.inf])
+                -180.0, -180.0, -180.0, -np.inf, -np.inf, -np.inf, -np.inf])
         high = np.array([np.inf, np.inf, np.inf, np.inf, np.inf, np.inf,
-               180.0, 180.0, 180.0, np.inf, np.inf, np.inf, np.inf])
+                180.0, 180.0, 180.0, np.inf, np.inf, np.inf, np.inf])
         # low = np.full((self.n_observations), -np.inf)
         # high = np.full((self.n_observations), np.inf)
         # We only use two integers
@@ -148,7 +143,7 @@ class RedMadoanaEnv(red_env.RedEnv):
         rospy.logdebug("ACTION SPACES TYPE===>"+str(self.action_space))
         #~~~ observation pattern ~~~
         rospy.logdebug("OBSERVATION SPACES TYPE===>" +
-                       str(self.observation_space))
+                        str(self.observation_space))
 
         #~~~ Rewards ~~~
         # 報酬設定をどうするか
@@ -166,10 +161,10 @@ class RedMadoanaEnv(red_env.RedEnv):
         # move_baseをどうするかはもう決まっている
         # 差動二輪の原理から算出
         self.move_base(self.init_linear_forward_speed_high,                       
-                       self.init_linear_turn_speed,
-                       epsilon=0.05,
-                       update_rate=10,
-                       min_laser_distance=-1)
+                        self.init_linear_turn_speed,
+                        epsilon=0.05,
+                        update_rate=10,
+                        min_laser_distance=-1)
 
         return True
 
@@ -242,13 +237,12 @@ class RedMadoanaEnv(red_env.RedEnv):
 
         # We tell TurtleBot2 the linear and angular speed to set to execute
         self.move_base(linear_speed,
-                       angular_speed,
-                       epsilon=0.05,
-                       update_rate=10,
-                       min_laser_distance=self.min_range)
+                        angular_speed,
+                        epsilon=0.05,
+                        update_rate=10,
+                        min_laser_distance=self.min_range)
 
-        rospy.logdebug("END Set Action ==>"+str(action) +
-                       ", NAME="+str(self.last_action))
+        rospy.logdebug("END Set Action ==>"+str(action) + ", NAME="+str(self.last_action))
 
     #~~~ 状態空間の設定 ~~~
     def _get_obs(self):
@@ -286,7 +280,7 @@ class RedMadoanaEnv(red_env.RedEnv):
 
         # We round to only two decimals to avoid very big Observation space
         imu_array = [round(linear_x, 2), round(linear_y, 2), round(linear_z, 2),
-                     round(angular_x, 2), round(angular_y, 2), round(angular_z, 2)]
+                    round(angular_x, 2), round(angular_y, 2), round(angular_z, 2)]
         pose_array = [round(roll, 2), round(pitch, 2), round(yaw, 2)]
         dist_array = [round(x_dist, 2), round(y_dist, 2), round(z_dist, 2)]
         odom_array = [round(x_position, 2), round(y_position, 2), round(z_position, 2)]
@@ -302,8 +296,7 @@ class RedMadoanaEnv(red_env.RedEnv):
     def _is_done(self, observations):
 
         if self._episode_done:
-            rospy.logdebug("red can't escape stuck" +
-                           str(self._episode_done))
+            rospy.logdebug("red can't escape stuck" + str(self._episode_done))
         else:
             rospy.logerr("escape stuck!!!!!!!!!")
 

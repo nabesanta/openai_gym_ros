@@ -1,18 +1,34 @@
-red: 
+red:
+    # タスクとロボットの環境名
     task_and_robot_environment_name: 'RedMadoana-v0'
+    
+    # ROSワークスペースの絶対パス
     ros_ws_abspath: "/home/nabesanta/red_RL"
-    running_step: 0.04   # amount of time the control will be executed
-    pos_step: 0.016   # increment in position for each command
+    
+    # コントロールが実行される時間（秒）
+    running_step: 0.04
 
-    #qlearn parameters
-    # α
+    # 各コマンドごとの位置の増分
+    pos_step: 0.016
+
+    # Q学習のパラメータ
+    # 学習率（α）
     alpha: 0.5
-    # ε
+    
+    # 探索率（ε）
     epsilon: 0.9
-    # γ
+    
+    # 割引率（γ）
     gamma: 0.99
 
+    # 探索率の減衰率
     epsilon_discount: 0.999
+
+    # エピソード数
     n_episodes: 100
+
+    # 各エピソードにおけるステップ数
     n_steps: 5000
-    running_step: 0.06   # time for each step
+
+    # 各ステップの時間（秒）
+    running_step: 0.06

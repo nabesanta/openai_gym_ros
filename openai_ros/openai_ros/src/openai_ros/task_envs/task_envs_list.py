@@ -1,97 +1,58 @@
 #!/usr/bin/env python3
+
 from gym.envs.registration import register
 from gym import envs
 
-
 def RegisterOpenAI_Ros_Env(task_env, max_episode_steps=10000):
     """
-    Registers all the ENVS supported in OpenAI ROS. This way we can load them
-    with variable limits.
-    Here is where you have to PLACE YOUR NEW TASK ENV, to be registered and accesible.
-    return: False if the Task_Env wasnt registered, True if it was.
+    OpenAI Gymの環境を登録する関数。
+    :param task_env: タスク環境の名前
+    :param max_episode_steps: 最大エピソードステップ数
+    :return: 登録結果
     """
-
-    ###########################################################################
-    # MovingCube Task-Robot Envs
-
+    # 登録結果の初期化
     result = True
-
-    # red madoana stuck escaping
+    
+    # タスク環境に応じて登録を行う
     if task_env == 'RedMadoana-v0':
-
+        # RedMadoana環境を登録
         register(
             id=task_env,
             entry_point='openai_ros.task_envs.red.red_madoana:RedMadoanaEnv',
             max_episode_steps=max_episode_steps,
         )
-        # import our training environment
+        # RedMadoana環境をインポート
         from openai_ros.task_envs.red import red_madoana
 
-    # Cubli Moving Cube
     elif task_env == 'TurtleBot2Maze-v0':
-
+        # TurtleBot2Maze環境を登録
         register(
             id=task_env,
             entry_point='openai_ros.task_envs.turtlebot2.turtlebot2_maze:TurtleBot2MazeEnv',
             max_episode_steps=max_episode_steps,
         )
-        # import our training environment
+        # TurtleBot2Maze環境をインポート
         from openai_ros.task_envs.turtlebot2 import turtlebot2_maze
 
-    elif task_env == 'MyTurtleBot2Wall-v0':
+    # 他のタスク環境も同様に登録
 
-        register(
-            id=task_env,
-            entry_point='openai_ros.task_envs.turtlebot2.turtlebot2_wall:TurtleBot2WallEnv',
-            max_episode_steps=max_episode_steps,
-        )
-        # import our training environment
-        from openai_ros.task_envs.turtlebot2 import turtlebot2_wall
-
-    elif task_env == 'MyTurtleBot2WillowGarage-v0':
-
-        register(
-            id=task_env,
-            entry_point='openai_ros.task_envs.turtlebot2.turtlebot2_willow_garage:TurtleBot2WillowGarageEnv',
-            max_episode_steps=max_episode_steps,
-        )
-        # import our training environment
-        from openai_ros.task_envs.turtlebot2 import turtlebot2_willow_garage
-
-    elif task_env == 'TurtleBot3World-v0':
-
-        register(
-            id=task_env,
-            entry_point='openai_ros.task_envs.turtlebot3.turtlebot3_world:TurtleBot3WorldEnv',
-            max_episode_steps=max_episode_steps,
-        )
-
-        # import our training environment
-        from openai_ros.task_envs.turtlebot3 import turtlebot3_world
-
-
-    # Add here your Task Envs to be registered
+    # 未知のタスク環境の場合
     else:
         result = False
 
-    ###########################################################################
-
+    # 登録の確認
     if result:
-        # We check that it was really registered
+        # 登録されたすべての環境を取得
         supported_gym_envs = GetAllRegisteredGymEnvs()
-        #print("REGISTERED GYM ENVS===>"+str(supported_gym_envs))
         assert (task_env in supported_gym_envs), "The Task_Robot_ENV given is not Registered ==>" + \
             str(task_env)
 
     return result
 
-
 def GetAllRegisteredGymEnvs():
     """
-    Returns a List of all the registered Envs in the system
-    return EX: ['Copy-v0', 'RepeatCopy-v0', 'ReversedAddition-v0', ... ]
+    登録されたすべてのOpenAI Gym環境のリストを取得する関数。
     """
-
     all_envs = envs.registry.keys()
     env_ids = list(all_envs)
 

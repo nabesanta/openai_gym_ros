@@ -8,16 +8,26 @@ from std_msgs.msg import Float64
 from geometry_msgs.msg import Vector3
 
 class GazeboConnection():
+    """
+    Gazeboシミュレーションとの接続と制御を行うクラス
+    """
 
-    def __init__(self, start_init_physics_parameters, reset_world_or_sim, max_retry = 20):
-
+    def __init__(self, start_init_physics_parameters, reset_world_or_sim, max_retry=20):
+        """
+        初期化メソッド
+        :param start_init_physics_parameters: 物理パラメータを初期化するかどうか
+        :param reset_world_or_sim: ワールドまたはシミュレーションをリセットするか
+        :param max_retry: サービスコールの最大リトライ回数
+        """
         self._max_retry = max_retry
+
+        # Gazeboのサービスプロキシを作成
         self.unpause = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
         self.pause = rospy.ServiceProxy('/gazebo/pause_physics', Empty)
         self.reset_simulation_proxy = rospy.ServiceProxy('/gazebo/reset_simulation', Empty)
         self.reset_world_proxy = rospy.ServiceProxy('/gazebo/reset_world', Empty)
 
-        # Setup the Gravity Controle system
+        # 物理パラメータの設定サービスを待機
         service_name = '/gazebo/set_physics_properties'
         rospy.logdebug("Waiting for service " + str(service_name))
         rospy.wait_for_service(service_name)
@@ -27,11 +37,14 @@ class GazeboConnection():
         self.start_init_physics_parameters = start_init_physics_parameters
         self.reset_world_or_sim = reset_world_or_sim
         self.init_values()
-        # We always pause the simulation, important for legged robots learning
+
+        # 常にシミュレーションを一時停止（ロボットの学習に重要）
         self.pauseSim()
 
-    #~~~ simulationを停止する ~~~
     def pauseSim(self):
+        """
+        シミュレーションを一時停止する
+        """
         rospy.logdebug("PAUSING service found...")
         paused_done = False
         counter = 0
@@ -46,14 +59,15 @@ class GazeboConnection():
                     counter += 1
                     rospy.logerr("/gazebo/pause_physics service call failed")
             else:
-                error_message = "Maximum retries done"+str(self._max_retry)+", please check Gazebo pause service"
+                error_message = "Maximum retries done " + str(self._max_retry) + ", please check Gazebo pause service"
                 rospy.logerr(error_message)
                 assert False, error_message
-
         rospy.logdebug("PAUSING FINISH")
 
-    #~~~ simulationの一時停止 ~~~ 
     def unpauseSim(self):
+        """
+        シミュレーションを再開する
+        """
         rospy.logdebug("UNPAUSING service found...")
         unpaused_done = False
         counter = 0
@@ -66,21 +80,17 @@ class GazeboConnection():
                     rospy.logdebug("UNPAUSING service calling...DONE")
                 except rospy.ServiceException as e:
                     counter += 1
-                    rospy.logerr("/gazebo/unpause_physics service call failed...Retrying "+str(counter))
+                    rospy.logerr("/gazebo/unpause_physics service call failed...Retrying " + str(counter))
             else:
-                error_message = "Maximum retries done"+str(self._max_retry)+", please check Gazebo unpause service"
+                error_message = "Maximum retries done " + str(self._max_retry) + ", please check Gazebo unpause service"
                 rospy.logerr(error_message)
                 assert False, error_message
-
-        rospy.logdebug("UNPAUSING FiNISH")
-
+        rospy.logdebug("UNPAUSING FINISH")
 
     def resetSim(self):
         """
-        This was implemented because some simulations, when reseted the simulation
-        the systems that work with TF break, and because sometime we wont be able to change them
-        we need to reset world that ONLY resets the object position, not the entire simulation
-        systems.
+        シミュレーションをリセットする
+        システムのリセットオプションに応じてシミュレーションまたはワールドをリセットする
         """
         if self.reset_world_or_sim == "SIMULATION":
             rospy.logerr("SIMULATION RESET")
@@ -91,24 +101,32 @@ class GazeboConnection():
         elif self.reset_world_or_sim == "NO_RESET_SIM":
             rospy.logerr("NO RESET SIMULATION SELECTED")
         else:
-            rospy.logerr("WRONG Reset Option:"+str(self.reset_world_or_sim))
+            rospy.logerr("WRONG Reset Option: " + str(self.reset_world_or_sim))
 
     def resetSimulation(self):
+        """
+        シミュレーション全体をリセットする
+        """
         rospy.wait_for_service('/gazebo/reset_simulation')
         try:
             self.reset_simulation_proxy()
         except rospy.ServiceException as e:
-            print ("/gazebo/reset_simulation service call failed")
+            rospy.logerr("/gazebo/reset_simulation service call failed")
 
     def resetWorld(self):
+        """
+        ワールドのみをリセットする
+        """
         rospy.wait_for_service('/gazebo/reset_world')
         try:
             self.reset_world_proxy()
         except rospy.ServiceException as e:
-            print ("/gazebo/reset_world service call failed")
+            rospy.logerr("/gazebo/reset_world service call failed")
 
     def init_values(self):
-
+        """
+        初期値を設定する
+        """
         self.resetSim()
 
         if self.start_init_physics_parameters:
@@ -119,8 +137,7 @@ class GazeboConnection():
 
     def init_physics_parameters(self):
         """
-        We initialise the physics parameters of the simulation, like gravity,
-        friction coeficients and so on.
+        シミュレーションの物理パラメータを初期化する
         """
         self._time_step = Float64(0.001)
         self._max_update_rate = Float64(1000.0)
@@ -144,9 +161,10 @@ class GazeboConnection():
 
         self.update_gravity_call()
 
-
     def update_gravity_call(self):
-
+        """
+        重力設定の更新を行う
+        """
         self.pauseSim()
 
         set_physics_request = SetPhysicsPropertiesRequest()
@@ -158,11 +176,17 @@ class GazeboConnection():
         rospy.logdebug(str(set_physics_request.gravity))
 
         result = self.set_physics(set_physics_request)
-        rospy.logdebug("Gravity Update Result==" + str(result.success) + ",message==" + str(result.status_message))
+        rospy.logdebug("Gravity Update Result == " + str(result.success) + ", message == " + str(result.status_message))
 
         self.unpauseSim()
 
     def change_gravity(self, x, y, z):
+        """
+        重力を変更する
+        :param x: 重力のx成分
+        :param y: 重力のy成分
+        :param z: 重力のz成分
+        """
         self._gravity.x = x
         self._gravity.y = y
         self._gravity.z = z
