@@ -25,16 +25,16 @@ def render():
 
 if __name__ == '__main__':
     # ノードの初期化
-    rospy.init_node('red_madoana_learn', anonymous=True, log_level=rospy.WARN)
+    rospy.init_node('red_training', anonymous=True, log_level=rospy.WARN)
 
     # 強化学習環境の名前取得
-    task_and_robot_environment_name = rospy.get_param('/red/task_and_robot_environment_name')
+    task_and_robot_environment_name = rospy.get_param('/myrobot_1/task_and_robot_environment_name')
 
     # 環境の登録と呼び出し
     env = StartOpenAI_ROS_Environment(task_and_robot_environment_name)
 
-    rospy.loginfo("Gym environment initialized")
-    rospy.loginfo("Starting Learning")
+    rospy.logwarn("Gym environment initialized")
+    rospy.logwarn("Starting Learning")
 
     # 画面録画
     outdir = '~/red_RL/src/openai_gym_ros/results'
@@ -44,13 +44,13 @@ if __name__ == '__main__':
     last_time_steps = numpy.ndarray(0)
 
     # ROSパラメータの読み込み
-    Alpha = rospy.get_param("/red/alpha")
-    Epsilon = rospy.get_param("/red/epsilon")
-    Gamma = rospy.get_param("/red/gamma")
-    epsilon_discount = rospy.get_param("/red/epsilon_discount")
-    n_episodes = rospy.get_param("/red/n_episodes")
-    n_steps = rospy.get_param("/red/n_steps")
-    running_step = rospy.get_param("/red/running_step")
+    Alpha = rospy.get_param("/myrobot_1/alpha")
+    Epsilon = rospy.get_param("/myrobot_1/epsilon")
+    Gamma = rospy.get_param("/myrobot_1/gamma")
+    epsilon_discount = rospy.get_param("/myrobot_1/epsilon_discount")
+    n_episodes = rospy.get_param("/myrobot_1/n_episodes")
+    n_steps = rospy.get_param("/myrobot_1/n_steps")
+    running_step = rospy.get_param("/myrobot_1/running_step")
 
     # Q学習の初期化
     qlearn = qlearn.QLearn(actions=range(env.action_space.n), epsilon=Epsilon, alpha=Alpha, gamma=Gamma)
@@ -83,7 +83,7 @@ if __name__ == '__main__':
             rospy.logwarn("Next action is: %d", action)
 
             # 行動を実行し、フィードバックを取得
-            observation, reward, done, info = env.step(action)
+            observation, reward, done, bool_rl, info = env.step(action)
             rospy.logwarn(str(observation) + " " + str(reward))
 
             # 報酬の累積と更新

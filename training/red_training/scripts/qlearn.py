@@ -19,7 +19,7 @@ class QLearn:
     def learnQ(self, state, action, reward, value):
         """
         Q値を学習・更新する。
-        新しいQ値は以下の式で計算される：
+        新しいQ値は以下の式で計算される:
         Q(s, a) += alpha * (reward(s,a) + gamma * max(Q(s', a')) - Q(s, a))
         """
         oldv = self.q.get((state, action), None)

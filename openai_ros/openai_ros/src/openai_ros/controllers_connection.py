@@ -39,6 +39,7 @@ class ControllersConnection():
             switch_result = self.switch_service(switch_request_object)
 
             rospy.logdebug("Switch Result ==> " + str(switch_result.ok))
+            rospy.logwarn("Switch Result ==> " + str(switch_result.ok))
 
             return switch_result.ok
 

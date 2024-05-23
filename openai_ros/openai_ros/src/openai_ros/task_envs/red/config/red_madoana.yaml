@@ -1,10 +1,10 @@
-red: #namespace
+myrobot_1: #namespace
     # ロボットの行動数
-    n_actions: 5
+    n_actions: 9
     # 観測値
     # ロボットの位置: x, y, z
     # コンテナとの関係: 距離、方向ベクトル
-    n_observations: 5
+    n_observations: 6
     # Time to wait in the reset phases
     speed_step: 1.0
 
@@ -34,9 +34,9 @@ red: #namespace
 
     # コンテナの位置
     desired_pose:
-      x: 5.615
-      y: 0.6319
-      z: 0.4688
+      x: 16.38
+      y: -1.196
+      z: 0.665
 
     # 報酬の設定
     distance_close: 5 # Points Given to rc distance close

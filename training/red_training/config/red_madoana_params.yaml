@@ -1,4 +1,4 @@
-red:
+myrobot_1:
     # タスクとロボットの環境名
     task_and_robot_environment_name: 'RedMadoana-v0'
     
@@ -31,4 +31,4 @@ red:
     n_steps: 5000
 
     # 各ステップの時間（秒）
-    running_step: 0.06
+    running_step: 0.1

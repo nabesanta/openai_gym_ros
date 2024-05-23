@@ -15,7 +15,7 @@ from openai_ros.msg import RLExperimentInfo
 # https://qiita.com/ohtaman/items/edcb3b0a2ff9d48a7def
 class RobotGazeboEnv(gym.Env):
 
-    def __init__(self, robot_name_space, controllers_list, reset_controls, start_init_physics_parameters=True, reset_world_or_sim="SIMULATION"):
+    def __init__(self, robot_name_space, controllers_list, reset_controls, start_init_physics_parameters, reset_world_or_sim="SIMULATION"):
         """
         初期化関数。主にROSとGazeboの接続を設定する。
 
@@ -27,6 +27,7 @@ class RobotGazeboEnv(gym.Env):
         """
 
         rospy.logdebug("START init RobotGazeboEnv")
+        rospy.logwarn("START init RobotGazeboEnv")
         self.gazebo = GazeboConnection(start_init_physics_parameters, reset_world_or_sim)
         self.controllers_object = ControllersConnection(namespace=robot_name_space, controllers_list=controllers_list)
         self.reset_controls = reset_controls
@@ -36,7 +37,7 @@ class RobotGazeboEnv(gym.Env):
         self.episode_num = 0
         self.cumulated_episode_reward = 0
         # 報酬値のパブリッシュ
-        self.reward_pub = rospy.Publisher('/red/openai/reward', RLExperimentInfo, queue_size=1)
+        self.reward_pub = rospy.Publisher('/myrobot_1/openai/reward', RLExperimentInfo, queue_size=1)
 
         # シミュレーションを再開し、コントローラをリセットする
         self.gazebo.unpauseSim()
@@ -44,6 +45,7 @@ class RobotGazeboEnv(gym.Env):
             self.controllers_object.reset_controllers()
 
         rospy.logdebug("END init RobotGazeboEnv")
+        rospy.logwarn("END init RobotGazeboEnv")
 
     # gym.Envの必須メソッド
     def seed(self, seed=None):

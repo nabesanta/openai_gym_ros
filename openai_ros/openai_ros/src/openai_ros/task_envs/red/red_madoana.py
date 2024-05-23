@@ -1,18 +1,21 @@
+# python関係
 import rospy
 import numpy as np
 import time
 import math
-from gym import spaces
-from openai_ros.robot_envs import red_env
-from gym.envs.registration import register
+import os
+# ROS関係
 from sensor_msgs.msg import LaserScan
 from sensor_msgs.msg import Imu
 from std_msgs.msg import Header
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import PoseStamped
+# 強化学習関係
+from gym import spaces
+from openai_ros.robot_envs import red_env
+from gym.envs.registration import register
 from openai_ros.task_envs.task_commons import LoadYamlFileParamsTest
 from openai_ros.openai_ros_common import ROSLauncher
-import os
 
 # roslaunchの起動
 # roslaunch robot_simulation start_red_maodoana.launch
@@ -20,7 +23,7 @@ class RedMadoanaEnv(red_env.RedEnv):
     def __init__(self):
         #~~~ ワークスペースの取得 ~~~
         # ros_ws_abspath: home/nabesanta/red_RL
-        ros_ws_abspath = rospy.get_param("/red/ros_ws_abspath", None)
+        ros_ws_abspath = rospy.get_param("/myrobot_1/ros_ws_abspath", None)
         # assert文を用いて例外処理
         assert ros_ws_abspath is not None, "You forgot to set ros_ws_abspath in your yaml file of your main RL script. Set ros_ws_abspath: \'YOUR/SIM_WS/PATH\'"
         assert os.path.exists(ros_ws_abspath), "The Simulation ROS Workspace path "+ros_ws_abspath + \
@@ -45,7 +48,7 @@ class RedMadoanaEnv(red_env.RedEnv):
         #~~~ Only variable needed to be set here ~~~
         # 行動空間の設定
         # redの行動は9つ: 前進・右旋回・左旋回（高速、中速、低速）
-        number_actions = rospy.get_param('/red/n_actions')
+        number_actions = rospy.get_param('/myrobot_1/n_actions')
         # gym.spaces.Discrete(n): 範囲[0、n-1]の離散値、Int型の数値
         self.action_space = spaces.Discrete(number_actions)
 
@@ -72,84 +75,76 @@ class RedMadoanaEnv(red_env.RedEnv):
         #~~~ Actions and Observations ~~~
         # action
         self.dec_obs = rospy.get_param(
-            "/red/number_decimals_precision_obs", 1)
+            "/myrobot_1/number_decimals_precision_obs", 1)
         self.linear_forward_speed_high = rospy.get_param(
-            '/red/linear_forward_speed_high')
+            '/myrobot_1/linear_forward_speed_high')
         self.linear_forward_speed_middle = rospy.get_param(
-            '/red/linear_forward_speed_middle')
+            '/myrobot_1/linear_forward_speed_middle')
         self.linear_forward_speed_low = rospy.get_param(
-            '/red/linear_forward_speed_low')
+            '/myrobot_1/linear_forward_speed_low')
         self.linear_turn_speed = rospy.get_param(
-            '/red/linear_turn_speed')
-        self.angular_speed_high = rospy.get_param('/red/angular_speed_high')
-        self.angular_speed_middle = rospy.get_param('/red/angular_speed_middle')
-        self.angular_speed_low = rospy.get_param('/red/angular_speed_low')
+            '/myrobot_1/linear_turn_speed')
+        self.angular_speed_high = rospy.get_param('/myrobot_1/angular_speed_high')
+        self.angular_speed_middle = rospy.get_param('/myrobot_1/angular_speed_middle')
+        self.angular_speed_low = rospy.get_param('/myrobot_1/angular_speed_low')
         # initialization
         self.init_linear_forward_speed_high = rospy.get_param(
-            '/red/init_linear_forward_speed_high')
+            '/myrobot_1/init_linear_forward_speed_high')
         self.init_linear_forward_speed_middle = rospy.get_param(
-            '/red/init_linear_forward_speed_middle')
+            '/myrobot_1/init_linear_forward_speed_middle')
         self.init_linear_forward_speed_low = rospy.get_param(
-            '/red/init_linear_forward_speed_low')
+            '/myrobot_1/init_linear_forward_speed_low')
         self.init_linear_turn_speed = rospy.get_param(
-            '/red/init_linear_turn_speed')
+            '/myrobot_1/init_linear_turn_speed')
         self.init_angular_speed_high = rospy.get_param(
-            '/red/init_angular_speed_high')
+            '/myrobot_1/init_angular_speed_high')
         self.init_angular_speed_middle = rospy.get_param(
-            '/red/init_angular_speed_middle')
+            '/myrobot_1/init_angular_speed_middle')
         self.init_angular_speed_low = rospy.get_param(
-            '/red/init_angular_speed_low')
+            '/myrobot_1/init_angular_speed_low')
 
         #~~~ 観測空間の設定 ~~~
-        # 観測値はコンテナとの距離
-        self.n_observations = rospy.get_param('/red/n_observations')
-        self.new_ranges = rospy.get_param('/red/new_ranges')
-        self.min_range = rospy.get_param('/red/min_range')
-        self.max_distance_value = rospy.get_param('/red/max_distance_value')
-        self.min_distance_value = rospy.get_param('/red/min_distance_value')
+        # 観測値はロボットの位置、コンテナとの距離
+        self.n_observations = rospy.get_param('/myrobot_1/n_observations')
+        self.new_ranges = rospy.get_param('/myrobot_1/new_ranges')
+        self.min_range = rospy.get_param('/myrobot_1/min_range')
+        self.max_distance_value = rospy.get_param('/myrobot_1/max_distance_value')
+        self.min_distance_value = rospy.get_param('/myrobot_1/min_distance_value')
 
         # Get Desired Point to Get
         # ここはコンテナの位置にしたいな        
         self.desired_point = Point()
-        self.desired_point.x = rospy.get_param("/red/desired_pose/x")
-        self.desired_point.y = rospy.get_param("/red/desired_pose/y")
-        self.desired_point.z = rospy.get_param("/red/desired_pose/z")
+        self.desired_point.x = rospy.get_param("/myrobot_1/desired_pose/x")
+        self.desired_point.y = rospy.get_param("/myrobot_1/desired_pose/y")
+        self.desired_point.z = rospy.get_param("/myrobot_1/desired_pose/z")
 
         #~~~ We create two arrays based on the binary values that will be assigned ~~~
         # In the discretization method.
-        # ==== imu, pose, dist, odom ====
-        imu = self.get_imu()
-        pose = self.get_pose()
+        # ==== dist, odom ====
         dist = self.get_dist()
         odom = self.get_odom()
 
         #~~~ imu, pose, dist, odom data ~~~
-        self.imu_frame = imu.header.frame_id
-        self.pose_frame = pose.header.frame_id
         self.dist_frame = dist.header.frame_id
         self.odom_frame = odom.header.frame_id
 
         #~~~ 観測値のhighとlowを設定する ~~~
-        low = np.array([-np.inf, -np.inf, -np.inf, -np.inf, -np.inf, -np.inf,
-                -180.0, -180.0, -180.0, -np.inf, -np.inf, -np.inf, -np.inf])
-        high = np.array([np.inf, np.inf, np.inf, np.inf, np.inf, np.inf,
-                180.0, 180.0, 180.0, np.inf, np.inf, np.inf, np.inf])
-        # low = np.full((self.n_observations), -np.inf)
-        # high = np.full((self.n_observations), np.inf)
-        # We only use two integers
+        low = np.array([-np.inf, -np.inf, -np.inf, -np.inf, -np.inf, -np.inf])
+        high = np.array([np.inf, np.inf, np.inf, np.inf, np.inf, np.inf])
         self.observation_space = spaces.Box(low, high)
 
         #~~~ action patter ~~~
         rospy.logdebug("ACTION SPACES TYPE===>"+str(self.action_space))
+        rospy.logwarn("ACTION SPACES TYPE===>"+str(self.action_space))
         #~~~ observation pattern ~~~
-        rospy.logdebug("OBSERVATION SPACES TYPE===>" +
-                        str(self.observation_space))
+        rospy.logdebug("OBSERVATION SPACES TYPE===>" + str(self.observation_space))
+        rospy.logwarn("OBSERVATION SPACES TYPE===>" + str(self.observation_space))
 
         #~~~ Rewards ~~~
         # 報酬設定をどうするか
-        self.distance_close = rospy.get_param("/red/distance_close")
-        self.correct_pose = rospy.get_param("/red/correct_pose")
-        self.end_episode_points = rospy.get_param("/red/end_episode_points")
+        self.distance_close = rospy.get_param("/myrobot_1/distance_close")
+        self.correct_pose = rospy.get_param("/myrobot_1/correct_pose")
+        self.end_episode_points = rospy.get_param("/myrobot_1/end_episode_points")
 
         # step数の積算
         self.cumulated_steps = 0.0
@@ -243,6 +238,7 @@ class RedMadoanaEnv(red_env.RedEnv):
                         min_laser_distance=self.min_range)
 
         rospy.logdebug("END Set Action ==>"+str(action) + ", NAME="+str(self.last_action))
+        rospy.logwarn("END Set Action ==>"+str(action) + ", NAME="+str(self.last_action))
 
     #~~~ 状態空間の設定 ~~~
     def _get_obs(self):
@@ -254,24 +250,14 @@ class RedMadoanaEnv(red_env.RedEnv):
         """
         rospy.logdebug("Start Get Observation ==>")
         # We get the odometry so that SumitXL knows where it is.
-        # imu
-        obs_imu = self.get_imu()
-        linear_x = obs_imu.linear_acceleration.x
-        linear_y = obs_imu.linear_acceleration.y
-        linear_z = obs_imu.linear_acceleration.z
-        angular_x = obs_imu.angular_velocity.x
-        angular_y = obs_imu.angular_velocity.y
-        angular_z = obs_imu.angular_velocity.z
-        # pose
-        obs_pose = self.get_pose()
-        roll = obs_pose.pose.position.x
-        pitch = obs_pose.pose.position.y
-        yaw = obs_pose.pose.position.z
         # dist
         obs_dist = self.get_dist()
+        # r
         x_dist = obs_dist.pose.position.x
-        y_dist = 0.0
-        z_dist = 0.0
+        # theta
+        y_dist = obs_dist.pose.position.y
+        # phi
+        z_dist = obs_dist.pose.position.z
         # odom
         obs_odom = self.get_odom()
         x_position = obs_odom.pose.pose.position.x
@@ -279,14 +265,11 @@ class RedMadoanaEnv(red_env.RedEnv):
         z_position = obs_odom.pose.pose.position.z
 
         # We round to only two decimals to avoid very big Observation space
-        imu_array = [round(linear_x, 2), round(linear_y, 2), round(linear_z, 2),
-                    round(angular_x, 2), round(angular_y, 2), round(angular_z, 2)]
-        pose_array = [round(roll, 2), round(pitch, 2), round(yaw, 2)]
         dist_array = [round(x_dist, 2), round(y_dist, 2), round(z_dist, 2)]
         odom_array = [round(x_position, 2), round(y_position, 2), round(z_position, 2)]
 
         # We only want the X and Y position and the Yaw
-        observations = imu_array + pose_array + dist_array + odom_array
+        observations = dist_array + odom_array
 
         rospy.logdebug("Observations==>"+str(observations))
         rospy.logdebug("END Get Observation ==>")

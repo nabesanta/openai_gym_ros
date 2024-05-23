@@ -34,7 +34,35 @@ def RegisterOpenAI_Ros_Env(task_env, max_episode_steps=10000):
         # TurtleBot2Maze環境をインポート
         from openai_ros.task_envs.turtlebot2 import turtlebot2_maze
 
-    # 他のタスク環境も同様に登録
+    elif task_env == 'MyTurtleBot2Wall-v0':
+        # MyTurtleBot2Wall環境を登録
+            register(
+                id=task_env,
+                entry_point='openai_ros.task_envs.turtlebot2.turtlebot2_wall:TurtleBot2WallEnv',
+                max_episode_steps=max_episode_steps,
+            )
+            # MyTurtleBot2Wall環境をインポート
+            from openai_ros.task_envs.turtlebot2 import turtlebot2_wall
+
+    elif task_env == 'MyTurtleBot2WillowGarage-v0':
+        # MyTurtleBot2WillowGarage環境を登録
+        register(
+            id=task_env,
+            entry_point='openai_ros.task_envs.turtlebot2.turtlebot2_willow_garage:TurtleBot2WillowGarageEnv',
+            max_episode_steps=max_episode_steps,
+        )
+        # MyTurtleBot2WillowGarage環境をインポート
+        from openai_ros.task_envs.turtlebot2 import turtlebot2_willow_garage
+
+    elif task_env == 'TurtleBot3World-v0':
+        # TurtleBot3World環境を登録
+        register(
+            id=task_env,
+            entry_point='openai_ros.task_envs.turtlebot3.turtlebot3_world:TurtleBot3WorldEnv',
+            max_episode_steps=max_episode_steps,
+        )
+        # TurtleBot3World環境をインポート
+        from openai_ros.task_envs.turtlebot3 import turtlebot3_world
 
     # 未知のタスク環境の場合
     else:

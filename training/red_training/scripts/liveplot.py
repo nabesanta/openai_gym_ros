@@ -27,7 +27,8 @@ class LivePlot(object):
         plt.style.use('ggplot')  # グラフのスタイルを 'ggplot' に設定
         plt.xlabel("Episodes")  # X軸のラベルを設定
         plt.ylabel(data_key)  # Y軸のラベルを設定
-        fig = plt.gcf().canvas.set_window_title('simulation_graph')  # グラフウィンドウのタイトルを設定
+        self.fig = plt.gcf()  # 現在の図を取得
+        self.fig.canvas.manager.set_window_title('simulation_graph')  # 図のマネージャーを使用してウィンドウタイトルを設定
 
     def plot(self, env):
         """
