@@ -173,7 +173,7 @@ class RedMadoanaEnv(red_env.RedEnv):
         based on the action number given.
         :param action: The action integer that set s what movement to do next.
         """
-
+        
         rospy.logdebug("Start Set Action ==>"+str(action))
         # We convert the actions to speed movements to send to the parent class CubeSingleDiskEnv
         # 前進
