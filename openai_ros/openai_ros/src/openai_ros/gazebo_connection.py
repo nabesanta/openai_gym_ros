@@ -46,18 +46,15 @@ class GazeboConnection():
         シミュレーションを一時停止する
         """
         rospy.logdebug("PAUSING service found...")
-        rospy.logwarn("PAUSING service found...")
         paused_done = False
         counter = 0
         while not paused_done and not rospy.is_shutdown():
             if counter < self._max_retry:
                 try:
                     rospy.logdebug("PAUSING service calling...")
-                    rospy.logwarn("PAUSING service calling...")
                     self.pause()
                     paused_done = True
                     rospy.logdebug("PAUSING service calling...DONE")
-                    rospy.logwarn("PAUSING service calling...DONE")
                 except rospy.ServiceException as e:
                     counter += 1
                     rospy.logerr("/gazebo/pause_physics service call failed")
@@ -78,11 +75,9 @@ class GazeboConnection():
             if counter < self._max_retry:
                 try:
                     rospy.logdebug("UNPAUSING service calling...")
-                    rospy.logwarn("UNPAUSING service calling...")
                     self.unpause()
                     unpaused_done = True
                     rospy.logdebug("UNPAUSING service calling...DONE")
-                    rospy.logwarn("UNPAUSING service calling...DONE")
                 except rospy.ServiceException as e:
                     counter += 1
                     rospy.logerr("/gazebo/unpause_physics service call failed...Retrying " + str(counter))

@@ -22,7 +22,6 @@ from openai_ros.openai_ros_common import ROSLauncher
 class RedMadoanaEnv(red_env.RedEnv):
     def __init__(self):
         #~~~ ワークスペースの取得 ~~~
-        # ros_ws_abspath: home/nabesanta/red_RL
         ros_ws_abspath = rospy.get_param("/myrobot_1/ros_ws_abspath", None)
         # assert文を用いて例外処理
         assert ros_ws_abspath is not None, "You forgot to set ros_ws_abspath in your yaml file of your main RL script. Set ros_ws_abspath: \'YOUR/SIM_WS/PATH\'"
@@ -45,13 +44,12 @@ class RedMadoanaEnv(red_env.RedEnv):
 
         #~~~ Only variable needed to be set here ~~~
         # 行動空間の設定
-        # redの行動は14つ: 右車輪（前後・停止）× 左車輪（前後・停止）
+        # redの行動は14つ
         number_actions = rospy.get_param('/myrobot_1/n_actions')
         # gym.spaces.Discrete(n): 範囲[0、n-1]の離散値、Int型の数値
         self.action_space = spaces.Discrete(number_actions)
 
         #~~~ We set the reward range, which is not compulsory but here we do it. ~~~
-        # OpenAIのデフォルト値
         self.reward_range = (-np.inf, np.inf)
 
         """
@@ -70,7 +68,6 @@ class RedMadoanaEnv(red_env.RedEnv):
         ]
         """
 
-        #~~~ Actions and Observations ~~~
         # action
         self.dec_obs = rospy.get_param(
             "/myrobot_1/number_decimals_precision_obs", 1)
@@ -92,7 +89,6 @@ class RedMadoanaEnv(red_env.RedEnv):
         self.init_angular_speed_low = rospy.get_param(
             '/myrobot_1/init_angular_speed_low')
 
-        #~~~ 観測空間の設定 ~~~
         # 観測値はロボットの位置、コンテナとの距離
         self.n_observations = rospy.get_param('/myrobot_1/n_observations')
         self.new_ranges = rospy.get_param('/myrobot_1/new_ranges')
@@ -113,8 +109,8 @@ class RedMadoanaEnv(red_env.RedEnv):
         self.position_frame = position.header.frame_id
 
         #~~~ 観測値のhighとlowを設定する ~~~
-        low = np.array([-np.inf, -np.inf, -np.inf, -np.inf, -np.inf])
-        high = np.array([np.inf, np.inf, np.inf, np.inf, np.inf])
+        low = np.array([-np.inf, -np.inf, -np.inf, -np.inf, -np.inf, -np.inf, -np.inf])
+        high = np.array([np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf])
         self.observation_space = spaces.Box(low, high)
 
         #~~~ action patter ~~~

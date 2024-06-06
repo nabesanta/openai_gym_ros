@@ -22,20 +22,15 @@ class QLearn:
         新しいQ値は以下の式で計算される:
         Q(s, a) += alpha * (reward(s,a) + gamma * max(Q(s', a')) - Q(s, a))
         """
-        oldv = self.q.get((state, action), None)
-        if oldv is None:
-            # 初めての状態・行動ペアの場合、報酬をそのままQ値とする
-            self.q[(state, action)] = reward
-        else:
-            # 既存のQ値を更新する
-            self.q[(state, action)] = oldv + self.alpha * (self.gamma * value - oldv)
+        oldv = self.q.get((state, action), 0.0)
+        # 常にQ値の更新ルールに従うように修正
+        self.q[(state, action)] = oldv + self.alpha * (value - oldv)
 
     def chooseAction(self, state, return_q=False):
         """
         ε-greedy法に基づいて行動を選択する。
         探索率εの確率でランダムに行動を選択し、それ以外の場合は最もQ値の高い行動を選択する。
         """
-        # 状態と行動の組み合わせから最のQ値を選ぶ
         q = [self.getQ(state, a) for a in self.actions]
         maxQ = max(q)
 
@@ -67,4 +62,5 @@ class QLearn:
         Q(s, a)を更新する。
         """
         maxqnew = max([self.getQ(state2, a) for a in self.actions])
+        # Q値の更新ルールに基づく修正
         self.learnQ(state1, action1, reward, reward + self.gamma * maxqnew)

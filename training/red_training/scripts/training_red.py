@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
 
 import csv
-import pprint
-import gym
 import numpy
 import time
 import qlearn
 import liveplot
 import rospy
-import rospkg
 from functools import reduce
-from gym import wrappers
 from openai_ros.openai_ros_common import StartOpenAI_ROS_Environment
 
 def render():
@@ -33,6 +29,7 @@ if __name__ == '__main__':
     # 環境の登録と呼び出し
     env = StartOpenAI_ROS_Environment(task_and_robot_environment_name)
 
+    # 強化学習環境の呼び出し
     rospy.logwarn("Gym environment initialized")
     rospy.logwarn("Starting Learning")
 
@@ -50,7 +47,6 @@ if __name__ == '__main__':
     epsilon_discount = rospy.get_param("/myrobot_1/epsilon_discount")
     n_episodes = rospy.get_param("/myrobot_1/n_episodes")
     n_steps = rospy.get_param("/myrobot_1/n_steps")
-    running_step = rospy.get_param("/myrobot_1/running_step")
 
     # Q学習の初期化
     qlearn = qlearn.QLearn(actions=range(env.action_space.n), epsilon=Epsilon, alpha=Alpha, gamma=Gamma)
@@ -58,11 +54,13 @@ if __name__ == '__main__':
 
     # 学習の開始時間取得
     start_time = time.time()
+    # 最高報酬の初期化
     highest_reward = 0
 
     # メイントレーニングループの開始
     for x in range(n_episodes):
         rospy.logdebug("############### START EPISODE => " + str(x))
+        # 積算報酬の初期化
         cumulated_reward = 0
         done = False
 
@@ -83,19 +81,21 @@ if __name__ == '__main__':
             # 観測・方策
             action = qlearn.chooseAction(state)
             rospy.logwarn("Next action is: %d", action)
-            # time.sleep(3.0)
-            # 行動を実行し、フィードバックを取得
+            # 行動を実行
+            # 観測値、報酬、エピソード終了などを取得
             observation, reward, done, bool_rl, info = env.step(action)
-            rospy.logwarn(str(observation) + " " + str(reward))
+            rospy.logwarn("observation: " + str(observation) + ", reward: " + str(reward))
 
             # 報酬の累積と更新
             cumulated_reward += reward
             if highest_reward < cumulated_reward:
                 highest_reward = cumulated_reward
 
+            # 観測値から得られる次の行動
             nextState = ''.join(map(str, observation))
 
             # Q学習による価値関数の計算
+            # 現在の状態、行動、報酬、次の状態からQ値の更新
             qlearn.learn(state, action, reward, nextState)
 
             if not done:
@@ -106,7 +106,7 @@ if __name__ == '__main__':
 
             rospy.logwarn("############### END Step => " + str(i))
 
-        # エピソードの時間を計算
+        # 1エピソードの時間を計算
         m, s = divmod(int(time.time() - start_time), 60)
         h, m = divmod(m, 60)
         rospy.logerr(

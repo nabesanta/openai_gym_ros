@@ -28,7 +28,6 @@ class RobotGazeboEnv(gym.Env):
         """
 
         rospy.logdebug("START init RobotGazeboEnv")
-        rospy.logwarn("START init RobotGazeboEnv")
         self.gazebo = GazeboConnection(start_init_physics_parameters, reset_world_or_sim)
         self.controllers_object = ControllersConnection(namespace=robot_name_space, controllers_list=controllers_list)
         self.reset_controls = reset_controls
@@ -46,7 +45,6 @@ class RobotGazeboEnv(gym.Env):
             self.controllers_object.reset_controllers()
 
         rospy.logdebug("END init RobotGazeboEnv")
-        rospy.logwarn("END init RobotGazeboEnv")
 
     # gym.Envの必須メソッド
     def seed(self, seed=None):
@@ -65,6 +63,18 @@ class RobotGazeboEnv(gym.Env):
         self.gazebo.unpauseSim()  # シミュレーションを再開
         self._set_action(action)  # 行動を実行
         time.sleep(1.0)
+        # initial_obs = self._get_obs()  # 初期観測値を取得
+        # obs = initial_obs
+        # start_time = time.time()
+        # max_duration = 10  # 最大待機時間（秒）
+
+        # while not self._is_done(obs) and (time.time() - start_time < max_duration):
+        #     time.sleep(0.1)  # 少し待機してから観測値を再取得
+        #     obs = self._get_obs()  # 観測値を再取得
+            
+        #     # 観測値が変化したか確認
+        #     if obs != initial_obs:
+        #         break
         self.gazebo.pauseSim()    # シミュレーションを停止
         obs = self._get_obs()     # 観測値を取得
         done = self._is_done(obs) # エピソード終了条件をチェック

@@ -57,7 +57,6 @@ class ROSLauncher(object):
         try:
             pkg_path = self.rospack.get_path(rospackage_name)
             rospy.logdebug("Package FOUND...")
-            rospy.logwarn("Package FOUND...")
             rospy.logwarn("rospackage path: {}".format(pkg_path))
         except rospkg.common.ResourceNotFound:
             rospy.logwarn("Package NOT FOUND, lets Download it...")
@@ -66,7 +65,6 @@ class ROSLauncher(object):
         # パッケージが指定されたワークスペースに存在するか確認
         if ros_ws_abspath in pkg_path:
             rospy.logdebug("Package FOUND in the correct WS!")
-            rospy.logwarn("Package FOUND in the correct WS!")
         else:
             rospy.logwarn("Package FOUND in "+pkg_path + ", BUT not in the ws="+ros_ws_abspath+", lets Download it...")
             pkg_path = self.DownloadRepo(package_name=rospackage_name, ros_ws_abspath=ros_ws_abspath)
@@ -75,7 +73,6 @@ class ROSLauncher(object):
         # パッケージが見つかった場合、launchファイルを起動
         if pkg_path:
             rospy.loginfo(">>>>>>>>>>Package found in workspace-->"+str(pkg_path))
-            rospy.logwarn(">>>>>>>>>>Package found in workspace-->"+str(pkg_path))
             # launchディレクトリとlaunchファイルのパスを作成
             launch_dir = os.path.join(pkg_path, "launch")
             path_launch_file_name = os.path.join(launch_dir, launch_file_name)
@@ -94,16 +91,12 @@ class ROSLauncher(object):
             state = p.poll()
             if state is None:
                 rospy.loginfo("process is running fine")
-                rospy.logwarn("process is running fine")
             elif state < 0:
                 rospy.loginfo("Process terminated with error")
-                rospy.logwarn("Process terminated with error")
             elif state > 0:
                 rospy.loginfo("Process terminated without error")
-                rospy.logwarn("Process terminated with error")
 
             rospy.loginfo(">>>>>>>>>STARTED Roslaunch-->" + str(self._launch_file_name))
-            rospy.logwarn(">>>>>>>>>STARTED Roslaunch-->" + str(self._launch_file_name))
         else:
             assert False, "No Package Path was found for ROS package ==>" + str(rospackage_name)
 
