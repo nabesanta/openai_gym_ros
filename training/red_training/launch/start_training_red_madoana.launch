@@ -4,7 +4,7 @@
     <!-- robot 1号機-->
     <arg name="robot1" default="myrobot_1"/>
     <!-- 実行周期 -->
-    <arg name="HZ_ALL" default="10"/>
+    <arg name="HZ_ALL" default="20"/>
     <!-- This version uses the openai_ros environments -->
     <rosparam command="load" file="$(find red_training)/config/red_madoana_params.yaml" />
 
@@ -13,7 +13,7 @@
         <node name="driver4movebase_data" pkg="base_control" type="driver4movebase_data" output="screen" />
 
         <!-- distance from robot to container -->
-        <node name="odom_to_dist_rl_node" pkg="odom_to_dist_rl" type="odom_to_dist_rl_node" output="screen">
+        <node name="imu_filter_node" pkg="imu_filter" type="imu_filter_node" output="screen">
             <param name="HZ" value="$(arg HZ_ALL)"/>
         </node>
     </group>

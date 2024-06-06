@@ -1,6 +1,7 @@
 import rospy
 import gym
 import os
+import time
 from gym.utils import seeding
 import signal
 import subprocess
@@ -63,6 +64,7 @@ class RobotGazeboEnv(gym.Env):
 
         self.gazebo.unpauseSim()  # シミュレーションを再開
         self._set_action(action)  # 行動を実行
+        time.sleep(1.0)
         self.gazebo.pauseSim()    # シミュレーションを停止
         obs = self._get_obs()     # 観測値を取得
         done = self._is_done(obs) # エピソード終了条件をチェック
@@ -88,6 +90,15 @@ class RobotGazeboEnv(gym.Env):
         obs = self._get_obs()       # 初期観測値を取得
         rospy.logdebug("END Reseting RobotGazeboEnvironment")
         return obs
+
+    def close(self):
+        """
+        Function executed when closing the environment.
+        Use it for closing GUIS and other systems that need closing.
+        :return:
+        """
+        rospy.logdebug("Closing RobotGazeboEnvironment")
+        rospy.signal_shutdown("Closing RobotGazeboEnvironment")
 
     def _update_episode(self):
         """

@@ -6,29 +6,26 @@ myrobot_1:
     ros_ws_abspath: "/home/nabesanta/red_RL"
     
     # コントロールが実行される時間（秒）
-    running_step: 0.04
+    running_step: 1.00
 
     # 各コマンドごとの位置の増分
     pos_step: 0.016
 
     # Q学習のパラメータ
     # 学習率（α）
-    alpha: 0.5
+    alpha: 0.2
     
     # 探索率（ε）
     epsilon: 0.9
     
     # 割引率（γ）
-    gamma: 0.99
+    gamma: 0.8
 
     # 探索率の減衰率
     epsilon_discount: 0.999
 
     # エピソード数
-    n_episodes: 100
+    n_episodes: 10000
 
     # 各エピソードにおけるステップ数
     n_steps: 5000
-
-    # 各ステップの時間（秒）
-    running_step: 0.1

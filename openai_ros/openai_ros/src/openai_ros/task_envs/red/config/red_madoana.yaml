@@ -18,13 +18,13 @@ myrobot_1: #namespace
     init_angular_speed_low: 0.0 # Angular speed when turning Left or Right
 
     # action parameter 
-    linear_forward_speed_high: 1.0
-    linear_forward_speed_middle: 0.5
-    linear_forward_speed_low: 0.3
+    linear_forward_speed_high: 0.5
+    linear_forward_speed_middle: 0.3
+    linear_forward_speed_low: 0.1
     linear_turn_speed: 0.1 # Lienare speed when turning
-    angular_speed_high: 1.0 # Angular speed when turning Left or Right
-    angular_speed_middle: 0.5 # Angular speed when turning Left or Right
-    angular_speed_low: 0.3 # Angular speed when turning Left or Right
+    angular_speed_high: 0.5 # Angular speed when turning Left or Right
+    angular_speed_middle: 0.3 # Angular speed when turning Left or Right
+    angular_speed_low: 0.1 # Angular speed when turning Left or Right
 
     # lidar/測距センサを使用する場合の設定
     new_ranges: 5 # How many laser readings we jump in each observation reading, the bigger the less laser resolution
@@ -34,12 +34,15 @@ myrobot_1: #namespace
 
     # コンテナの位置
     desired_pose:
-      x: 16.38
-      y: -1.196
-      z: 0.665
+      # x: 8.6740
+      # y: 0.5378
+      # z: 0.0633
+      x: 8.6740
+      y: 6.5378
+      z: 0.0633
 
     # 報酬の設定
-    distance_close: 5 # Points Given to rc distance close
-    correct_pose: 1 # Points Given to ロボットの姿勢が正常姿勢
+    distance_close: 1 # Points Given to rc distance close
+    distance_little: 1 # Points Given to ロボットの姿勢が正常姿勢
     end_episode_points: 200 # Points given when ending an episode   
 

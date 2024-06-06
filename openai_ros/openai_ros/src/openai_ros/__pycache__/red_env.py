@@ -49,13 +49,10 @@ class RedEnv(robot_gazebo_env.RobotGazeboEnv):
 
         # We Start all the ROS related Subscribers and publishers
         # red subscriber
-        # imu
-        rospy.Subscriber("/myrobot_1/imu/data_filtered", Imu, self._imu_callback)
+        # robotの位置
+        rospy.Subscriber("/myrobot_1/odom", Odometry, self._odom_callback)
         # 測距センサの値
-        rospy.Subscriber("/myrobot_1/gazebo/laser_filtered", PoseStamped, self._laser_callback)
-        # 位置
-        rospy.Subscriber("/myrobot_1/odom_filtered", PoseStamped, self._odom_callback)
-        
+        rospy.Subscriber("/myrobot_1/three_dist_3d", PoseStamped, self._dist_callback)
         # publisher
         self._cmd_vel_pub = rospy.Publisher('/myrobot_1/cmd_vel', Twist, queue_size=1)
 
@@ -65,6 +62,7 @@ class RedEnv(robot_gazebo_env.RobotGazeboEnv):
         self.gazebo.pauseSim()
 
         rospy.logdebug("Finished RedEnv INIT...")
+        rospy.logwarn("Finished RedEnv INIT...")
 
     # Methods needed by the RobotGazeboEnv
     # ----------------------------
@@ -81,10 +79,11 @@ class RedEnv(robot_gazebo_env.RobotGazeboEnv):
     #~~~ all ~~~
     def _check_all_sensors_ready(self):
         rospy.logdebug("START ALL SENSORS READY")
-        self._check_imu_ready()
-        self._check_laser_ready()
+        rospy.logwarn("START ALL SENSORS READY")
         self._check_odom_ready()
+        self._check_dist_ready()
         rospy.logdebug("ALL SENSORS READY")
+        rospy.logwarn("ALL SENSORS READY")
 
     #~~~ robot odom ~~~ 
     def _check_odom_ready(self):
@@ -92,48 +91,38 @@ class RedEnv(robot_gazebo_env.RobotGazeboEnv):
         rospy.logdebug("Waiting for /myrobot_1/odom to be READY...")
         while self.odom is None and not rospy.is_shutdown():
             try:
-                self.odom = rospy.wait_for_message("/myrobot_1/odom_filtered", PoseStamped, timeout=10.0)
+                self.odom = rospy.wait_for_message("/myrobot_1/odom", Odometry, timeout=5.0)
                 rospy.logdebug("Current /myrobot_1/odom READY=>")
+                rospy.logwarn("Current /myrobot_1/odom READY=>")
+
             except:
                 rospy.logerr("Current /myrobot_1/odom not ready yet, retrying for getting odom")
+                rospy.logwarn("Current /myrobot_1/odom not ready yet, retrying for getting odom")
 
         return self.odom
     
-    #~~~ imu ready ~~~
-    def _check_imu_ready(self):
-        self.imu = None
-        rospy.logdebug("Waiting for /myrobot_1/imu/data_filtered to be READY...")
-        while self.imu is None and not rospy.is_shutdown():
+    #~~~ dist ready ~~~
+    def _check_dist_ready(self):
+        self.dist = None
+        rospy.logdebug("Waiting for /myrobot_1/three_dist_3d to be READY...")
+        while self.dist is None and not rospy.is_shutdown():
             try:
-                self.imu = rospy.wait_for_message("/myrobot_1/imu/data_filtered", Imu, timeout=10.0)
-                rospy.logdebug("Current /myrobot_1/imu/data_filtered READY=>")
+                self.dist = rospy.wait_for_message("/myrobot_1/three_dist_3d", PoseStamped, timeout=5.0)
+                rospy.logdebug("Current /myrobot_1/three_dist_3d READY=>")
+                rospy.logwarn("Current /myrobot_1/three_dist_3d READY=>")
+
             except:
-                rospy.logerr("Current /myrobot_1/imu/data_filtered not ready yet, retrying for getting dist")
+                rospy.logerr("Current /myrobot_1/three_dist_3d not ready yet, retrying for getting dist")
+                rospy.logwarn("Current /myrobot_1/three_dist_3d not ready yet, retrying for getting dist")
 
-        return self.imu
-
-    #~~~ laser ready ~~~
-    def _check_laser_ready(self):
-        self.laser = None
-        rospy.logdebug("Waiting for /myrobot_1/gazebo/laser_filtered to be READY...")
-        while self.laser is None and not rospy.is_shutdown():
-            try:
-                self.laser = rospy.wait_for_message("/myrobot_1/gazebo/laser_filtered", PoseStamped, timeout=10.0)
-                rospy.logdebug("Current /myrobot_1/gazebo/laser_filtered READY=>")
-            except:
-                rospy.logerr("Current /myrobot_1/gazebo/laser_filtered not ready yet, retrying for getting dist")
-
-        return self.laser
+        return self.dist
 
     #~~~ callback function ~~~ 
     def _odom_callback(self, data):
         self.odom = data
 
-    def _imu_callback(self, data):
-        self.imu = data
-
-    def _laser_callback(self, data):
-        self.laser = data
+    def _dist_callback(self, data):
+        self.dist = data
 
     #~~~ check publisher conection ~~~ 
     def _check_publishers_connection(self):
@@ -150,8 +139,10 @@ class RedEnv(robot_gazebo_env.RobotGazeboEnv):
                 # This is to avoid error when world is rested, time when backwards.
                 pass
         rospy.logdebug("_cmd_vel_pub Publisher Connected")
+        rospy.logwarn("_cmd_vel_pub Publisher Connected")
 
         rospy.logdebug("All Publishers READY")
+        rospy.logwarn("All Publishers READY")
 
     #~~~ Methods that the TrainingEnvironment will need to define here as virtual ~~~
     # because they will be used in RobotGazeboEnv GrandParentClass and defined in the
@@ -205,7 +196,7 @@ class RedEnv(robot_gazebo_env.RobotGazeboEnv):
         rospy.logdebug("Red Base Twist Cmd>>" + str(cmd_vel_value))
         self._check_publishers_connection()
         self._cmd_vel_pub.publish(cmd_vel_value)
-        time.sleep(1.0)
+        time.sleep(0.1)
         """
         self.wait_until_twist_achieved(cmd_vel_value,
                                         epsilon,
@@ -302,11 +293,8 @@ class RedEnv(robot_gazebo_env.RobotGazeboEnv):
     def get_odom(self):
         return self.odom
     
-    def get_imu(self):
-        return self.imu
-    
-    def get_laser(self):
-        return self.laser
+    def get_dist(self):
+        return self.dist
 
     def reinit_sensors(self):
         """

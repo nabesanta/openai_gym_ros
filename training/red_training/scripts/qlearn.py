@@ -35,6 +35,7 @@ class QLearn:
         ε-greedy法に基づいて行動を選択する。
         探索率εの確率でランダムに行動を選択し、それ以外の場合は最もQ値の高い行動を選択する。
         """
+        # 状態と行動の組み合わせから最のQ値を選ぶ
         q = [self.getQ(state, a) for a in self.actions]
         maxQ = max(q)
 

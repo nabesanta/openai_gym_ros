@@ -71,6 +71,7 @@ if __name__ == '__main__':
             qlearn.epsilon *= epsilon_discount
 
         # 環境のリセットと初期状態の取得
+        # 環境から現在の状態を観測
         observation = env.reset()
         state = ''.join(map(str, observation))
 
@@ -79,9 +80,10 @@ if __name__ == '__main__':
             rospy.logwarn("############### Start Step => " + str(i))
 
             # 現在の状態から次に行う行動を選択
+            # 観測・方策
             action = qlearn.chooseAction(state)
             rospy.logwarn("Next action is: %d", action)
-
+            # time.sleep(3.0)
             # 行動を実行し、フィードバックを取得
             observation, reward, done, bool_rl, info = env.step(action)
             rospy.logwarn(str(observation) + " " + str(reward))
@@ -112,7 +114,7 @@ if __name__ == '__main__':
                 x + 1, qlearn.alpha, qlearn.gamma, qlearn.epsilon, cumulated_reward, h, m, s))
 
         # CSVファイルに報酬を書き込む
-        with open('/home/nabesanta/red_RL/src/openai_gym_ros/robots/red_ws/src/csv/odom_to_dist/data.csv', 'a') as f:
+        with open('/home/nabesanta/red_RL/src/openai_gym_ros/csv/data.csv', 'a') as f:
             writer = csv.writer(f)
             writer.writerow([cumulated_reward])
 
