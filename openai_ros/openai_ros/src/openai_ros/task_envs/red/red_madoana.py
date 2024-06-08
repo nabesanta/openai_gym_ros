@@ -1,55 +1,48 @@
-# python関係
+#!/usr/bin/env python3
+
+import os
+import time
 import rospy
 import numpy as np
-import time
-import math
-import os
 # ROS関係
-from sensor_msgs.msg import LaserScan
-from sensor_msgs.msg import Imu
 from std_msgs.msg import Header
+from sensor_msgs.msg import Imu
 from geometry_msgs.msg import Point
+from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import PoseStamped
 # 強化学習関係
 from gym import spaces
 from openai_ros.robot_envs import red_env
 from gym.envs.registration import register
-from openai_ros.task_envs.task_commons import LoadYamlFileParamsTest
 from openai_ros.openai_ros_common import ROSLauncher
+from openai_ros.task_envs.task_commons import LoadYamlFileParamsTest
 
-# roslaunchの起動
-# roslaunch robot_simulation start_red_maodoana.launch
 class RedMadoanaEnv(red_env.RedEnv):
     def __init__(self):
-        #~~~ ワークスペースの取得 ~~~
         ros_ws_abspath = rospy.get_param("/myrobot_1/ros_ws_abspath", None)
         # assert文を用いて例外処理
         assert ros_ws_abspath is not None, "You forgot to set ros_ws_abspath in your yaml file of your main RL script. Set ros_ws_abspath: \'YOUR/SIM_WS/PATH\'"
         assert os.path.exists(ros_ws_abspath), "The Simulation ROS Workspace path "+ros_ws_abspath + \
             " DOESNT exist, execute: mkdir -p "+ros_ws_abspath + \
             "/src;cd "+ros_ws_abspath+";catkin build"
-
-        #~~~ gazebo world start ~~~
+            
         ROSLauncher(rospackage_name="robot_simulation",
                     launch_file_name="start_red_madoana.launch",
                     ros_ws_abspath=ros_ws_abspath)
-
-        # Load Params from the desired Yaml file
+        
         LoadYamlFileParamsTest(rospackage_name="openai_ros",
                                 rel_path_from_package_to_file="src/openai_ros/task_envs/red/config",
                                 yaml_file_name="red_madoana_rl.yaml")
-
-        # Here we will add any init functions prior to starting the MyRobotEnv
+        
         super(RedMadoanaEnv, self).__init__(ros_ws_abspath)
-
+        
         #~~~ Only variable needed to be set here ~~~
         # 行動空間の設定
         # redの行動は14つ
         number_actions = rospy.get_param('/myrobot_1/n_actions')
         # gym.spaces.Discrete(n): 範囲[0、n-1]の離散値、Int型の数値
         self.action_space = spaces.Discrete(number_actions)
-
-        #~~~ We set the reward range, which is not compulsory but here we do it. ~~~
+        
         self.reward_range = (-np.inf, np.inf)
 
         """
@@ -267,9 +260,13 @@ class RedMadoanaEnv(red_env.RedEnv):
         odom_y = position.pose.position.z
 
         # We round to only two decimals to avoid very big Observation space
-        laser_array = [int(laser_left), int(laser_right)]
-        imu_array = [int(a), int(g)]
-        odom_array = [int(odom), int(odom_x), int(odom_y)]
+        # laser_array = [int(laser_left), int(laser_right)]
+        # imu_array = [int(a), int(g)]
+        # odom_array = [int(odom), int(odom_x), int(odom_y)]
+        
+        laser_array = [laser_left, laser_right]
+        imu_array = [a, g]
+        odom_array = [odom, odom_x, odom_y]
 
         # We only want the X and Y position and the Yaw
         observations = laser_array + imu_array + odom_array

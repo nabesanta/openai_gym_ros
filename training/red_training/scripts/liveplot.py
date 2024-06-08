@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 # 必要なライブラリのインポート
+import gym
 import matplotlib
 import matplotlib.pyplot as plt
-import gym
 
 # 定数の定義
 rewards_key = 'episode_rewards'

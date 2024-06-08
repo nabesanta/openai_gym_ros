@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-import gym
-import roslaunch
-import rospy
-import rospkg
+
 import os
+import gym
 import git
 import sys
+import rospy
+import rospkg
 import subprocess
 from .task_envs.task_envs_list import RegisterOpenAI_Ros_Env
 

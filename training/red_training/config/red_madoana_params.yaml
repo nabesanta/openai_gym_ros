@@ -4,7 +4,7 @@ myrobot_1:
     
     # ROSワークスペースの絶対パス
     ros_ws_abspath: "/home/nabesanta/red_RL"
-
+    
     # Q学習のパラメータ
     # 学習率（α）
     alpha: 0.2

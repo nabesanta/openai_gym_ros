@@ -1,13 +1,15 @@
-import rospy
-import gym
+#!/usr/bin/env python3
+
 import os
+import gym
 import time
-from gym.utils import seeding
+import rospy
 import signal
 import subprocess
+from gym.utils import seeding
+from openai_ros.msg import RLExperimentInfo
 from .gazebo_connection import GazeboConnection
 from .controllers_connection import ControllersConnection
-from openai_ros.msg import RLExperimentInfo
 
 # 参考URL
 # https://github.com/openai/gym/blob/master/gym/core.py
@@ -62,7 +64,7 @@ class RobotGazeboEnv(gym.Env):
 
         self.gazebo.unpauseSim()  # シミュレーションを再開
         self._set_action(action)  # 行動を実行
-        time.sleep(1.0)
+        # time.sleep(1.0)
         # initial_obs = self._get_obs()  # 初期観測値を取得
         # obs = initial_obs
         # start_time = time.time()

@@ -2,10 +2,10 @@
 
 import rospy
 from std_srvs.srv import Empty
-from gazebo_msgs.msg import ODEPhysics
-from gazebo_msgs.srv import SetPhysicsProperties, SetPhysicsPropertiesRequest
 from std_msgs.msg import Float64
 from geometry_msgs.msg import Vector3
+from gazebo_msgs.msg import ODEPhysics
+from gazebo_msgs.srv import SetPhysicsProperties, SetPhysicsPropertiesRequest
 
 class GazeboConnection():
     """
@@ -38,7 +38,7 @@ class GazeboConnection():
         self.reset_world_or_sim = reset_world_or_sim
         self.init_values()
 
-        # 常にシミュレーションを一時停止（ロボットの学習に重要）
+        # シミュレーションの一時停止
         self.pauseSim()
 
     def pauseSim(self):
