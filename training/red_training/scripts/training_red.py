@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import csv
 import time
 import numpy
@@ -71,15 +72,24 @@ if __name__ == '__main__':
             qlearn.epsilon *= epsilon_discount
         
         # 環境のリセットと初期状態の取得
-        # 環境から現在の状態を観測
         observation = env.reset()
         # SOMの初期化
         n_side = 20  # 20×20の格子に変更
-        som = som.SOM(n_side, learning_rate=0.75)
-        som.initialize_weights(7)
-        observation_vec = som.transform(numpy.array(observation))
+        som_rl = som.SOM(n_side, learning_rate=0.75)
+        som_rl.initialize_weights(7)
+        observation_vec = som_rl.transform(numpy.array(observation))
         state = ''.join(map(str, observation_vec))
-        
+        # 初期状態量
+        previous_obs = observation
+
+        # CSVファイルに報酬を書き込む
+        directory = '/media/usb1/' + str(x+1)
+        # ディレクトリが存在しない場合は作成
+        os.makedirs(directory, exist_ok=True)
+
+        diff_array = []
+        obs_array = []
+
         # 各エピソードでロボットをn_stepsテスト
         for i in range(n_steps):
             rospy.logwarn("############### Start Step => " + str(i))
@@ -93,11 +103,16 @@ if __name__ == '__main__':
             observation, reward, done, bool_rl, info = env.step(action)
             rospy.logwarn("observation: " + str(observation) + ", reward: " + str(reward))
             
+            # 観測値の変更
+            diff_obs = numpy.array(observation) - numpy.array(previous_obs)
+            diff_array.append(diff_obs)
+
             # 観測値に対してSOMをかける
-            winner_index = som.update_weights(numpy.array(observation), i, n_steps)
-            observation_vec = som.transform(numpy.array(observation))
+            winner_index = som_rl.update_weights(numpy.array(observation), i, n_steps)
+            observation_vec = som_rl.transform(numpy.array(observation))
+            obs_array.append(observation_vec)
             rospy.logwarn("observation_vec: " + str(observation_vec) + ", reward: " + str(reward))
-            
+
             # 報酬の累積と更新
             cumulated_reward += reward
             if highest_reward < cumulated_reward:
@@ -109,13 +124,14 @@ if __name__ == '__main__':
             # Q学習による価値関数の計算
             # 現在の状態、行動、報酬、次の状態からQ値の更新
             qlearn.learn(state, action, reward, nextState)
-            
+
             if not done:
                 state = nextState
+                previous_obs = observation
             else:
                 last_time_steps = numpy.append(last_time_steps, [int(i + 1)])
                 break
-            
+
             rospy.logwarn("############### END Step => " + str(i))
             
         # 1エピソードの時間を計算
@@ -125,10 +141,17 @@ if __name__ == '__main__':
             "EP: {} - [alpha: {:.2f} - gamma: {:.2f} - epsilon: {:.2f}] - Reward: {} - Time: {:02d}:{:02d}:{:02d}".format(
                 x + 1, qlearn.alpha, qlearn.gamma, qlearn.epsilon, cumulated_reward, h, m, s))
         
-        # CSVファイルに報酬を書き込む
-        with open('/home/nabesanta/red_RL/src/openai_gym_ros/csv/data.csv', 'a') as f:
+        with open('/media/usb1/reward.csv', 'a') as f:
             writer = csv.writer(f)
             writer.writerow([cumulated_reward])
+        with open(os.path.join(directory, 'diff_obs.csv'), 'a') as f:
+            writer = csv.writer(f)
+            writer.writerow([diff_array])
+        with open(os.path.join(directory, 'obs.csv'), 'a') as f:
+            writer = csv.writer(f)
+            writer.writerow([obs_array])
+
+
             
     rospy.loginfo("|{}|{}|{}|{}|{}|{}| PICTURE |".format(n_episodes, qlearn.alpha, qlearn.gamma, initial_epsilon,
                                                             epsilon_discount, highest_reward))

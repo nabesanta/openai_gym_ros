@@ -3,8 +3,8 @@ myrobot_1:
     task_and_robot_environment_name: 'RedMadoana-v0'
     
     # ROSワークスペースの絶対パス
-    ros_ws_abspath: "/home/nabesanta/red_RL"
-    
+    ros_ws_abspath: "/home/maedalab/red_RL"
+
     # Q学習のパラメータ
     # 学習率（α）
     alpha: 0.2

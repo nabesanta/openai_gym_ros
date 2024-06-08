@@ -101,6 +101,11 @@ class RedMadoanaEnv(red_env.RedEnv):
         self.imu_frame = IMU.header.frame_id
         self.position_frame = position.header.frame_id
 
+        # robot positoion
+        self.robot_x = 0
+        self.robot_y = 0
+        self.robot_z = 0
+
         #~~~ 観測値のhighとlowを設定する ~~~
         low = np.array([-np.inf, -np.inf, -np.inf, -np.inf, -np.inf, -np.inf, -np.inf])
         high = np.array([np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf])
@@ -258,6 +263,9 @@ class RedMadoanaEnv(red_env.RedEnv):
         odom = position.pose.position.x
         odom_x = position.pose.position.y
         odom_y = position.pose.position.z
+        self.robot_x = position.pose.orientation.x
+        self.robot_y = position.pose.orientation.y
+        self.robot_z = position.pose.orientation.z
 
         # We round to only two decimals to avoid very big Observation space
         # laser_array = [int(laser_left), int(laser_right)]
@@ -274,7 +282,7 @@ class RedMadoanaEnv(red_env.RedEnv):
         rospy.logdebug("Observations==>"+str(observations))
         rospy.logdebug("END Get Observation ==>")
     
-        return observations
+        return observations, [self.robot_x, self.robot_y, self.robot_z]
 
     #~~~ 完了判定 ~~~ 
     def _is_done(self, observations):

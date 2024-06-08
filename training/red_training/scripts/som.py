@@ -8,8 +8,8 @@ class SOM:
         self.n_weight = self.n_side * self.n_side
         self.weight = None
         self.points = np.array([[i // self.n_side, i % self.n_side] for i in range(self.n_weight)])
-        self.points = self.points / (1.0 * self.n_side)
-        self.num_bins = 20  # バイナリ分割の数
+        self.points = self.points / (self.n_side - 1)  # 0〜1の範囲に正規化
+        self.num_bins = 20  # 20分割
 
     def initialize_weights(self, n_vector):
         self.weight = np.random.rand(self.n_weight, n_vector)
@@ -29,6 +29,10 @@ class SOM:
         diff = input_vector - self.weight
         winner_index = np.argmin(np.linalg.norm(diff, axis=1))
         winner_point = self.points[winner_index]
-        transformed_vec = ((winner_point - 0.5) * 2).tolist()
-        transformed_vec = [round(val, 1) for val in transformed_vec]
-        return transformed_vec
+        transformed_vec = ((winner_point - 0.5) * 2).tolist()  # [-1, 1]の範囲に変換
+        
+        # -1〜1の範囲を20分割して値を調整
+        bin_edges = np.linspace(-1, 1, self.num_bins + 1)
+        binned_vec = [bin_edges[np.digitize(val, bin_edges) - 1] for val in transformed_vec]
+        binned_vec = [round(val, 1) for val in binned_vec]  # 小数第1位に丸める
+        return binned_vec

@@ -205,7 +205,6 @@ class RedEnv(robot_gazebo_env.RobotGazeboEnv):
         rospy.logdebug("Red Base Twist Cmd>>" + str(cmd_vel_value))
         self._check_publishers_connection()
         self._cmd_vel_pub.publish(cmd_vel_value)
-        time.sleep(0.2)
         """
         self.wait_until_twist_achieved(cmd_vel_value,
                                         epsilon,

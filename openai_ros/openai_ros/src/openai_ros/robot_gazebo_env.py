@@ -2,6 +2,7 @@
 
 import os
 import gym
+import csv
 import time
 import rospy
 import signal
@@ -64,21 +65,29 @@ class RobotGazeboEnv(gym.Env):
 
         self.gazebo.unpauseSim()  # シミュレーションを再開
         self._set_action(action)  # 行動を実行
-        # time.sleep(1.0)
+        # シミュレーション内の時間で1ステップを実行
+        time.sleep(1.0)
+        # 状態変化に応じて、ステップ数を管理
         # initial_obs = self._get_obs()  # 初期観測値を取得
         # obs = initial_obs
         # start_time = time.time()
         # max_duration = 10  # 最大待機時間（秒）
-
         # while not self._is_done(obs) and (time.time() - start_time < max_duration):
         #     time.sleep(0.1)  # 少し待機してから観測値を再取得
         #     obs = self._get_obs()  # 観測値を再取得
-            
         #     # 観測値が変化したか確認
         #     if obs != initial_obs:
+        #         rospy.logwarn("Change obs!!!!!!!!!!!!!!!")
         #         break
         self.gazebo.pauseSim()    # シミュレーションを停止
-        obs = self._get_obs()     # 観測値を取得
+        obs, position = self._get_obs()     # 観測値を取得
+        # CSVファイルに報酬を書き込む
+        directory = '/media/usb1/' + str(self.episode_num)
+        # ディレクトリが存在しない場合は作成
+        os.makedirs(directory, exist_ok=True)
+        with open(os.path.join(directory, 'diff.csv'), 'a') as f:
+            writer = csv.writer(f)
+            writer.writerow([position, action])
         done = self._is_done(obs) # エピソード終了条件をチェック
         info = {}
         reward = self._compute_reward(obs, done)  # 報酬を計算
@@ -95,11 +104,11 @@ class RobotGazeboEnv(gym.Env):
         :return: 初期観測値
         """
         rospy.logdebug("Reseting RobotGazeboEnvironment")
-        print("Reseting RobotGazeboEnvironment")
+        rospy.logwarn("Reseting RobotGazeboEnvironment")
         self._reset_sim()           # シミュレーションをリセット
         self._init_env_variables()  # 環境変数を初期化
         self._update_episode()      # エピソードを更新
-        obs = self._get_obs()       # 初期観測値を取得
+        obs, position = self._get_obs()       # 初期観測値を取得
         rospy.logdebug("END Reseting RobotGazeboEnvironment")
         return obs
 
