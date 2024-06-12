@@ -17,6 +17,7 @@ class SOM:
     def update_weights(self, vec, t, n_learn):
         alpha = 1.0 - float(t) / n_learn
         diff = vec - self.weight
+        diff[np.isinf(diff)] = 10  # infを10に置換
         winner_index = np.argmin(np.linalg.norm(diff, axis=1))
         winner_point = self.points[winner_index]
         delta_point = self.points - winner_point
@@ -27,6 +28,7 @@ class SOM:
 
     def transform(self, input_vector):
         diff = input_vector - self.weight
+        diff[np.isinf(diff)] = 10  # infを10に置換
         winner_index = np.argmin(np.linalg.norm(diff, axis=1))
         winner_point = self.points[winner_index]
         transformed_vec = ((winner_point - 0.5) * 2).tolist()  # [-1, 1]の範囲に変換

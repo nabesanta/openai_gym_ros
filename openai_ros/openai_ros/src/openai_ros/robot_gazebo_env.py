@@ -11,6 +11,9 @@ from gym.utils import seeding
 from openai_ros.msg import RLExperimentInfo
 from .gazebo_connection import GazeboConnection
 from .controllers_connection import ControllersConnection
+from std_msgs.msg import Float64
+from rospy.rostime import Duration
+from rosgraph_msgs.msg import Clock
 
 # 参考URL
 # https://github.com/openai/gym/blob/master/gym/core.py
@@ -41,6 +44,9 @@ class RobotGazeboEnv(gym.Env):
         self.cumulated_episode_reward = 0
         # 報酬値のパブリッシュ
         self.reward_pub = rospy.Publisher('/myrobot_1/openai/reward', RLExperimentInfo, queue_size=1)
+        self.sim_start_time = None
+        self.real_start_time = rospy.Time.now()
+        rospy.Subscriber('/clock', Clock, self.clock_callback)
 
         # シミュレーションを再開し、コントローラをリセットする
         self.gazebo.unpauseSim()
@@ -48,6 +54,22 @@ class RobotGazeboEnv(gym.Env):
             self.controllers_object.reset_controllers()
 
         rospy.logdebug("END init RobotGazeboEnv")
+
+    def clock_callback(self, msg):
+        if self.sim_start_time is None:
+            self.sim_start_time = msg.clock
+        self.sim_time = msg.clock
+
+    def get_real_time_factor(self):
+        if self.sim_time is None or self.sim_start_time is None:
+            return 1.0  # デフォルトのリアルタイムファクター
+        current_real_time = rospy.Time.now()
+        elapsed_real_time = (current_real_time - self.real_start_time).to_sec()
+        elapsed_sim_time = (self.sim_time - self.sim_start_time).to_sec()
+        if elapsed_real_time > 0:
+            return elapsed_sim_time / elapsed_real_time
+        else:
+            return 1.0
 
     # gym.Envの必須メソッド
     def seed(self, seed=None):
@@ -65,8 +87,11 @@ class RobotGazeboEnv(gym.Env):
 
         self.gazebo.unpauseSim()  # シミュレーションを再開
         self._set_action(action)  # 行動を実行
-        # シミュレーション内の時間で1ステップを実行
-        time.sleep(1.0)
+        # シミュレーション内の時間で0.5秒スリープさせる
+        sim_time_sleep_simulation = 0.5
+        real_time_factor = self.get_real_time_factor()
+        real_time_sleep = sim_time_sleep_simulation / real_time_factor
+        rospy.sleep(rospy.Duration(real_time_sleep))
         # 状態変化に応じて、ステップ数を管理
         # initial_obs = self._get_obs()  # 初期観測値を取得
         # obs = initial_obs

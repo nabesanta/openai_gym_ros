@@ -139,8 +139,12 @@ class GazeboConnection():
         """
         シミュレーションの物理パラメータを初期化する
         """
-        self._time_step = Float64(0.001)
+        # # シミュレーション内の1ステップの時間: 0.01秒
+        self._time_step = Float64(0.1)
+        # 1秒間の最大更新数
+        # 1秒間: 1000回
         self._max_update_rate = Float64(1000.0)
+        self._real_time_update_rate = Float64(1000.0)
 
         self._gravity = Vector3()
         self._gravity.x = 0.0
