@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+    <!-- robot 1号機-->
+    <arg name="robot1" default="myrobot_1"/>
+    <!-- 実行周期 -->
+    <arg name="HZ_ALL" default="20"/>
+    <!-- This version uses the openai_ros environments -->
+    <rosparam command="load" file="$(find red_training)/config/red_madoana_params.yaml" />
+
+    <group ns="$(arg robot1)">
+        <!-- driver -->
+        <node name="driver4movebase_data" pkg="base_control" type="driver4movebase_data" output="screen" />
+
+        <!-- distance from robot to container -->
+        <node name="imu_filter_linear_node" pkg="imu_filter_linear" type="imu_filter_linear_node" output="screen">
+            <param name="HZ" value="$(arg HZ_ALL)"/>
+        </node>
+    </group>
+
+    <!-- Launch the training system -->
+    <node pkg="red_training_som" name="red_training_som" type="training_red_som.py" output="screen"/>
+
+</launch>

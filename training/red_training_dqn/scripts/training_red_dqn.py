@@ -16,16 +16,16 @@ from keras.models import Model
 from keras.layers import *
 from keras import backend as K
 
-import rl.core
+import core
 
 import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw
 
 from openai_ros.openai_ros_common import StartOpenAI_ROS_Environment
 
-# rl.core.Processorの関数を引き継いで変更
+# core.Processorの関数を引き継いで変更
 # すべて値の変更など
-class PendulumProcessorForDQN(rl.core.Processor):
+class PendulumProcessorForDQN(core.Processor):
     def __init__(self, enable_image=False, reshape_size=(84, 84)):
         self.shape = reshape_size
         self.enable_image = enable_image
@@ -85,8 +85,8 @@ class PendulumProcessorForDQN(rl.core.Processor):
 
         return img_arr
 
-# rl.core.Agentを引き継いで変更を加える
-class DQNAgent(rl.core.Agent):
+# core.Agentを引き継いで変更を加える
+class DQNAgent(core.Agent):
     def __init__(self, 
         input_shape, 
         enable_image_layer,

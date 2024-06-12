@@ -290,7 +290,6 @@ class RedMadoanaEnv(red_env.RedEnv):
         if self._episode_done:
             rospy.logdebug("red can't escape stuck" + str(self._episode_done))
         else:
-            rospy.logerr("escape stuck!!!!!!!!!")
 
             # 現在のロボットの距離を見る
             current_position = PoseStamped()

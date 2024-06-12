@@ -112,7 +112,7 @@ class RobotGazeboEnv(gym.Env):
         self.gazebo.pauseSim()    # シミュレーションを停止
         obs, position = self._get_obs()     # 観測値を取得
         # CSVファイルに報酬を書き込む
-        directory = '/media/usb1/' + str(self.episode_num)
+        directory = '/mnt/usb/som/' + str(self.episode_num)
         # ディレクトリが存在しない場合は作成
         os.makedirs(directory, exist_ok=True)
         with open(os.path.join(directory, 'diff.csv'), 'a') as f:
@@ -125,7 +125,7 @@ class RobotGazeboEnv(gym.Env):
 
         rospy.logdebug("END STEP OpenAIROS")
 
-        return obs, reward, done, info
+        return obs, reward, done, True, info
 
     def reset(self):
         """
