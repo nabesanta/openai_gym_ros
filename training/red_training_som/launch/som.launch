@@ -6,7 +6,7 @@
     <!-- 実行周期 -->
     <arg name="HZ_ALL" default="20"/>
     <!-- This version uses the openai_ros environments -->
-    <rosparam command="load" file="$(find red_training)/config/red_madoana_params.yaml" />
+    <rosparam command="load" file="$(find red_training_som)/config/red_madoana_params.yaml" />
 
     <group ns="$(arg robot1)">
         <!-- driver -->
