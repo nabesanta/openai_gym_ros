@@ -5,6 +5,7 @@ import csv
 import time
 import numpy
 import rospy
+import som
 import qlearn
 import liveplot
 from functools import reduce
@@ -23,7 +24,7 @@ def render():
 
 if __name__ == '__main__':
     # ノードの初期化
-    rospy.init_node('red_training', anonymous=True, log_level=rospy.WARN)
+    rospy.init_node('red_training_SOM', anonymous=True, log_level=rospy.WARN)
     
     # 強化学習環境の名前取得
     task_and_robot_environment_name = rospy.get_param('/myrobot_1/task_and_robot_environment_name')
@@ -73,20 +74,27 @@ if __name__ == '__main__':
         
         # 環境のリセットと初期状態の取得
         observation = env.reset()
-        
+
+        # SOMの初期化
+        n_side = 20  # 20×20の格子に変更
+        som_rl = som.SOM(n_side, learning_rate=0.75)
+        som_rl.initialize_weights(7)
+        observation_vec = som_rl.transform(numpy.array(observation))
+        state = ''.join(map(str, observation_vec))
+
         # 初期状態量
         previous_obs = observation
-        
+
         # CSVファイルに報酬を書き込む
         directory = '/media/usb1/' + str(x+1)
         # ディレクトリが存在しない場合は作成
         os.makedirs(directory, exist_ok=True)
-        
+
         # 観測値の差分を格納するlist
         diff_array = []
         # SOMにかけた後の状態量を格納するlist
         obs_array = []
-        
+
         # 各エピソードでロボットをn_stepsテスト
         for i in range(n_steps):
             rospy.logwarn("############### Start Step => " + str(i))
@@ -97,12 +105,18 @@ if __name__ == '__main__':
             rospy.logwarn("Next action is: %d", action)
             # 行動を実行
             # 観測値、報酬、エピソード終了などを取得
-            observation, reward, done, info = env.step(action)
+            observation, reward, done, bool_rl, info = env.step(action)
             rospy.logwarn("observation: " + str(observation) + ", reward: " + str(reward))
             
             # 観測値の差分を計算
             diff_obs = numpy.array(observation) - numpy.array(previous_obs)
             diff_array.append(diff_obs)
+
+            # 観測値に対してSOMをかける
+            winner_index = som_rl.update_weights(numpy.array(observation), i, n_steps)
+            observation_vec = som_rl.transform(numpy.array(observation))
+            obs_array.append(observation_vec)
+            rospy.logwarn("observation_vec: " + str(observation_vec) + ", reward: " + str(reward))
 
             # 報酬の累積と更新
             cumulated_reward += reward
@@ -110,12 +124,12 @@ if __name__ == '__main__':
                 highest_reward = cumulated_reward
             
             # 観測値から得られる次の行動
-            nextState = ''.join(map(str, observation))
+            nextState = ''.join(map(str, observation_vec))
             
             # Q学習による価値関数の計算
             # 現在の状態、行動、報酬、次の状態からQ値の更新
             qlearn.learn(state, action, reward, nextState)
-            
+
             # エピソードが完了しなかったら次のステップへ
             if not done:
                 state = nextState
@@ -123,7 +137,7 @@ if __name__ == '__main__':
             else:
                 last_time_steps = numpy.append(last_time_steps, [int(i + 1)])
                 break
-            
+
             rospy.logwarn("############### END Step => " + str(i))
             
         # 1エピソードの時間を計算

@@ -1,7 +1,7 @@
-# ここを参照
-# https://github.com/keras-rl/keras-rl/tree/master
+#!/usr/bin/env python3
 
 import gym
+import rospy
 
 import pickle
 import os
@@ -11,6 +11,7 @@ import random
 import tensorflow as tf
 
 from keras.optimizers import Adam
+from keras.layers import Input, Conv2D, Activation, Flatten, Dense, Permute
 from keras.models import Model
 from keras.layers import *
 from keras import backend as K
@@ -20,13 +21,17 @@ import rl.core
 import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw
 
+from openai_ros.openai_ros_common import StartOpenAI_ROS_Environment
+
+# rl.core.Processorの関数を引き継いで変更
+# すべて値の変更など
 class PendulumProcessorForDQN(rl.core.Processor):
     def __init__(self, enable_image=False, reshape_size=(84, 84)):
         self.shape = reshape_size
         self.enable_image = enable_image
     
-    # 観測値
-    # env.stepに該当
+    # 観測値の変換
+    # 該当なし
     def process_observation(self, observation):
         if not self.enable_image:
             return observation
@@ -36,7 +41,7 @@ class PendulumProcessorForDQN(rl.core.Processor):
         return np.array(img) / 255
 
     # actionコード
-    # qlearn.chooseAction(state)に該当
+    # red_madoana内の_set_actionに該当
     def process_action(self, action):
         ACT_ID_TO_VALUE = {
             0: [-2.0], 
@@ -69,7 +74,7 @@ class PendulumProcessorForDQN(rl.core.Processor):
         # 棒の中心の円を描写（それっぽくしてみた）
         buff = img_size/32.0
         dr.ellipse(((h_size - buff, h_size - buff), (h_size + buff, h_size + buff)), 
-                   outline=(0, 0, 0), fill=(255, 0, 0))
+                    outline=(0, 0, 0), fill=(255, 0, 0))
 
         # 画像の一次元化（GrayScale化）とarrayへの変換
         pilImg = img.convert("L")
@@ -80,7 +85,7 @@ class PendulumProcessorForDQN(rl.core.Processor):
 
         return img_arr
 
-
+# rl.core.Agentを引き継いで変更を加える
 class DQNAgent(rl.core.Agent):
     def __init__(self, 
         input_shape, 
@@ -98,6 +103,8 @@ class DQNAgent(rl.core.Agent):
         final_epsilon=0.1,    # ϵ-greedy法の最終値
         exploration_steps=1000000,  # ϵ-greedy法の減少step数
         **kwargs):
+        
+        # 
         super(DQNAgent, self).__init__(**kwargs)
         self.compiled = False
 
@@ -124,14 +131,15 @@ class DQNAgent(rl.core.Agent):
         assert memory_capacity > self.batch_size, "Memory capacity is small.(Larger than batch size)"
         assert self.nb_steps_warmup > self.batch_size, "Warmup steps is few.(Larger than batch size)"
 
-    # rl.core.Agentのなかを書き換えている！！！！！！
-
+    # 変更必要なさそう
     def reset_states(self):
+        # 直近のステップのいくつ分、保持するか
         self.recent_observations = [np.zeros(self.input_shape) for _ in range(self.window_length+1)]
         self.recent_action = 0
         self.recent_reward = 0
         self.repeated_action = 0
 
+    # 変更必要なさそう
     def compile(self, optimizer=None, metrics=[]):
         # target networkは更新がないので optimizerとlossは何でもいい
         self.target_model.compile(optimizer='sgd', loss='mse')
@@ -145,15 +153,19 @@ class DQNAgent(rl.core.Agent):
             loss = tf.where((K.abs(err) < 1.0), L2, L1)   # Keras does not cover where function in tensorflow :-(
             return K.mean(loss)
         self.model.compile(loss=clipped_error_loss, optimizer=optimizer, metrics=metrics)
-
+        
         self.compiled = True
 
+    # 変更必要なさそう
     def load_weights(self, filepath):
         self.model.load_weights(filepath)
 
+    # 変更必要なさそう
     def save_weights(self, filepath, overwrite=False):
         self.model.save_weights(filepath, overwrite=overwrite)
 
+    # 観測値から行動を選択
+    # qlearn.chooseActionに該当、変更必要なさそう
     def forward(self, observation):
         # windowサイズ分observationを保存する
         self.recent_observations.append(observation)  # 最後に追加
@@ -192,7 +204,7 @@ class DQNAgent(rl.core.Agent):
         self.recent_action = action
         return action
 
-    # 長いので関数に
+    # qlearn.learnに該当、変更必要なさそう
     def forward_train(self):
         if not self.training:
             return
@@ -242,6 +254,7 @@ class DQNAgent(rl.core.Agent):
         self.recent_reward = reward
         return []
 
+    # ここから下は自作関数
     @property
     def layers(self):
         return self.model.layers[:]
@@ -269,7 +282,6 @@ class DQNAgent(rl.core.Agent):
 
         return Model(input_, c)
 
-
 class ReplayMemory():
     def __init__(self, capacity):
         self.capacity= capacity
@@ -285,51 +297,59 @@ class ReplayMemory():
     def sample(self, batch_size):
         return random.sample(self.memory, batch_size)
 
+if __name__ == '__main__':
+    # ノードの初期化
+    rospy.init_node('red_training_dqn', anonymous=True, log_level=rospy.WARN)
+    
+    # 強化学習環境の名前取得
+    task_and_robot_environment_name = rospy.get_param('/myrobot_1/task_and_robot_environment_name')
+    
+    # 環境の登録と呼び出し
+    env = StartOpenAI_ROS_Environment(task_and_robot_environment_name)
 
+    # 行動数
+    nb_actions = 14
 
-env = gym.make("Pendulum-v0")
+    # 取得した値、行動などの変更
+    processor = PendulumProcessorForDQN(enable_image=False)
 
-nb_actions = 5  # PendulumProcessorで5個と定義しているので5
+    # 辞書型引数
+    args={
+        "input_shape": env.observation_space.shape, 
+        "enable_image_layer": False, 
+        "nb_actions": nb_actions, 
+        "window_length": 1,         # 入力フレーム数
+        "memory_capacity": 100000,  # 確保するメモリーサイズ
+        "nb_steps_warmup": 200,     # 初期のメモリー確保用step数(学習しない)
+        "target_model_update": 100, # target networkのupdate間隔
+        "action_interval": 1,  # アクションを実行する間隔
+        "train_interval": 1,   # 学習する間隔
+        "batch_size": 64,   # batch_size
+        "gamma": 0.99,     # Q学習の割引率
+        "initial_epsilon": 1.0,  # ϵ-greedy法の初期値
+        "final_epsilon": 0.1,    # ϵ-greedy法の最終値
+        "exploration_steps": 5000,  # ϵ-greedy法の減少step数
+    }
 
-processor = PendulumProcessorForDQN(enable_image=False)
+    agent = DQNAgent(**args)
+    agent.compile(optimizer=Adam())
 
-# 引数が多いので辞書で定義して渡しています。
-args={
-    "input_shape": env.observation_space.shape, 
-    "enable_image_layer": False, 
-    "nb_actions": nb_actions, 
-    "window_length": 1,         # 入力フレーム数
-    "memory_capacity": 100000,  # 確保するメモリーサイズ
-    "nb_steps_warmup": 200,     # 初期のメモリー確保用step数(学習しない)
-    "target_model_update": 100, # target networkのupdate間隔
-    "action_interval": 1,  # アクションを実行する間隔
-    "train_interval": 1,   # 学習する間隔
-    "batch_size": 64,   # batch_size
-    "gamma": 0.99,     # Q学習の割引率
-    "initial_epsilon": 1.0,  # ϵ-greedy法の初期値
-    "final_epsilon": 0.1,    # ϵ-greedy法の最終値
-    "exploration_steps": 5000,  # ϵ-greedy法の減少step数
-    "processor": processor,
-}
-agent = DQNAgent(**args)
-agent.compile(optimizer=Adam())
+    # 訓練
+    print("--- start ---")
+    print("'Ctrl + C' is stop.")
+    history = agent.fit(env, nb_steps=50_000, visualize=False, verbose=1)
 
-# 訓練
-print("--- start ---")
-print("'Ctrl + C' is stop.")
-history = agent.fit(env, nb_steps=50_000, visualize=False, verbose=1)
+    # 結果を表示
+    plt.subplot(2,1,1)
+    plt.plot(history.history["nb_episode_steps"])
+    plt.ylabel("step")
 
-# 結果を表示
-plt.subplot(2,1,1)
-plt.plot(history.history["nb_episode_steps"])
-plt.ylabel("step")
+    plt.subplot(2,1,2)
+    plt.plot(history.history["episode_reward"])
+    plt.xlabel("episode")
+    plt.ylabel("reward")
 
-plt.subplot(2,1,2)
-plt.plot(history.history["episode_reward"])
-plt.xlabel("episode")
-plt.ylabel("reward")
+    plt.show()
 
-plt.show()
-
-# 訓練結果を見る
-agent.test(env, nb_episodes=5, visualize=True)
+    # 訓練結果を見る
+    agent.test(env, nb_episodes=5, visualize=True)

@@ -13,12 +13,12 @@
         <node name="driver4movebase_data" pkg="base_control" type="driver4movebase_data" output="screen" />
 
         <!-- distance from robot to container -->
-        <node name="imu_filter_node" pkg="imu_filter" type="imu_filter_node" output="screen">
+        <node name="imu_filter_linear_node" pkg="imu_filter_linear" type="imu_filter_linear_node" output="screen">
             <param name="HZ" value="$(arg HZ_ALL)"/>
         </node>
     </group>
 
     <!-- Launch the training system -->
-    <node pkg="red_training" name="red_training" type="training_red.py" output="screen"/>
+    <node pkg="red_training" name="red_training" type="training_red_SOM.py" output="screen"/>
 
 </launch>

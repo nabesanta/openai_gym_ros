@@ -1,0 +1,25 @@
+myrobot_1:
+    # タスクとロボットの環境名
+    task_and_robot_environment_name: 'RedMadoana-v0'
+    
+    # ROSワークスペースの絶対パス
+    ros_ws_abspath: "/home/maedalab/red_RL"
+
+    # Q学習のパラメータ
+    # 学習率（α）
+    alpha: 0.2
+    
+    # 探索率（ε）
+    epsilon: 0.9
+    
+    # 割引率（γ）
+    gamma: 0.8
+
+    # 探索率の減衰率
+    epsilon_discount: 0.99
+
+    # エピソード数
+    n_episodes: 10000
+
+    # 各エピソードにおけるステップ数
+    n_steps: 5000

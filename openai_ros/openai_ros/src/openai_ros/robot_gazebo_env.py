@@ -33,6 +33,7 @@ class RobotGazeboEnv(gym.Env):
         :param reset_world_or_sim: シミュレーションをリセットするか、ワールドをリセットするか
         """
 
+        # gazeboの初期化設定
         rospy.logdebug("START init RobotGazeboEnv")
         self.gazebo = GazeboConnection(start_init_physics_parameters, reset_world_or_sim)
         self.controllers_object = ControllersConnection(namespace=robot_name_space, controllers_list=controllers_list)
@@ -44,6 +45,7 @@ class RobotGazeboEnv(gym.Env):
         self.cumulated_episode_reward = 0
         # 報酬値のパブリッシュ
         self.reward_pub = rospy.Publisher('/myrobot_1/openai/reward', RLExperimentInfo, queue_size=1)
+        # clockからreal time factorを取得
         self.sim_start_time = None
         self.real_start_time = rospy.Time.now()
         rospy.Subscriber('/clock', Clock, self.clock_callback)
@@ -87,11 +89,13 @@ class RobotGazeboEnv(gym.Env):
 
         self.gazebo.unpauseSim()  # シミュレーションを再開
         self._set_action(action)  # 行動を実行
+        
         # シミュレーション内の時間で0.5秒スリープさせる
         sim_time_sleep_simulation = 0.5
         real_time_factor = self.get_real_time_factor()
         real_time_sleep = sim_time_sleep_simulation / real_time_factor
         rospy.sleep(rospy.Duration(real_time_sleep))
+        
         # 状態変化に応じて、ステップ数を管理
         # initial_obs = self._get_obs()  # 初期観測値を取得
         # obs = initial_obs
@@ -104,6 +108,7 @@ class RobotGazeboEnv(gym.Env):
         #     if obs != initial_obs:
         #         rospy.logwarn("Change obs!!!!!!!!!!!!!!!")
         #         break
+        
         self.gazebo.pauseSim()    # シミュレーションを停止
         obs, position = self._get_obs()     # 観測値を取得
         # CSVファイルに報酬を書き込む
@@ -120,7 +125,7 @@ class RobotGazeboEnv(gym.Env):
 
         rospy.logdebug("END STEP OpenAIROS")
 
-        return obs, reward, done, True, info
+        return obs, reward, done, info
 
     def reset(self):
         """
