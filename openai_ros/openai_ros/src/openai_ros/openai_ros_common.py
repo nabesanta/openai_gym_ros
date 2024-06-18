@@ -45,7 +45,7 @@ class ROSLauncher(object):
     :param ros_ws_abspath: ROSワークスペースの絶対パス
     """
 
-    def __init__(self, rospackage_name, launch_file_name, ros_ws_abspath="/home/nabesanta/red_RL"):
+    def __init__(self, rospackage_name, launch_file_name, ros_ws_abspath="/home/maedalab/red_RL"):
         # パッケージ名とlaunchファイル名を格納
         self._rospackage_name = rospackage_name
         self._launch_file_name = launch_file_name
@@ -120,7 +120,7 @@ class ROSLauncher(object):
 
         if package_name == "robot_simulation":
             # パッケージ情報の設定（例：SSH URLまたはHTTPS URL）
-            url_git_1 = "https://github.com/nabesanta/red_ws.git"
+            url_git_1 = "https://github.com/maedalab/red_ws.git"
             package_git = [url_git_1]
             package_to_branch_dict[url_git_1] = "develop"
 

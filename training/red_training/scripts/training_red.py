@@ -73,7 +73,8 @@ if __name__ == '__main__':
         
         # 環境のリセットと初期状態の取得
         observation = env.reset()
-        
+        state = ''.join(map(str, observation))
+
         # 初期状態量
         previous_obs = observation
         
@@ -97,7 +98,7 @@ if __name__ == '__main__':
             rospy.logwarn("Next action is: %d", action)
             # 行動を実行
             # 観測値、報酬、エピソード終了などを取得
-            observation, reward, done, info = env.step(action)
+            observation, reward, done, bool_rl, info = env.step(action)
             rospy.logwarn("observation: " + str(observation) + ", reward: " + str(reward))
             
             # 観測値の差分を計算

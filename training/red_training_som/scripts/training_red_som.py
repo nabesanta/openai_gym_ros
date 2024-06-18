@@ -23,66 +23,66 @@ def render():
         env.render(close=True)
 
 if __name__ == '__main__':
-    # ノードの初期化
-    rospy.init_node('red_training_SOM', anonymous=True, log_level=rospy.WARN)
+    # OK=ノードの初期化
+    rospy.init_node('red_training_som', anonymous=True, log_level=rospy.WARN)
     
-    # 強化学習環境の名前取得
+    # OK=強化学習環境の名前取得
     task_and_robot_environment_name = rospy.get_param('/myrobot_1/task_and_robot_environment_name')
     
-    # 環境の登録と呼び出し
+    # OK=環境の登録と呼び出し
     env = StartOpenAI_ROS_Environment(task_and_robot_environment_name)
     
-    # 強化学習環境の呼び出し
+    # OK=強化学習環境の呼び出し
     rospy.logwarn("Gym environment initialized")
     rospy.logwarn("Starting Learning")
     
-    # 画面録画
+    # OK-画面録画(使わない)
     outdir = '~/red_RL/src/openai_gym_ros/results'
     plotter = liveplot.LivePlot(outdir)
     
-    # ステップ数の格納変数
+    # OK=ステップ数の格納変数
     last_time_steps = numpy.ndarray(0)
     
-    # Q学習のパラメータ設定
+    # OK=Q学習のパラメータ設定
     Alpha = rospy.get_param("/myrobot_1/alpha")
-    Epsilon = rospy.get_param("/myrobot_1/epsilon")
     Gamma = rospy.get_param("/myrobot_1/gamma")
+    Epsilon = rospy.get_param("/myrobot_1/epsilon")
     epsilon_discount = rospy.get_param("/myrobot_1/epsilon_discount")
     n_episodes = rospy.get_param("/myrobot_1/n_episodes")
     n_steps = rospy.get_param("/myrobot_1/n_steps")
     
-    # Q学習の初期化
+    # OK=Q学習の初期化
     qlearn = qlearn.QLearn(actions=range(env.action_space.n), epsilon=Epsilon, alpha=Alpha, gamma=Gamma)
     initial_epsilon = qlearn.epsilon
     
-    # 学習の開始時間取得
+    # OK=学習の開始時間取得
     start_time = time.time()
-    # 最高報酬の初期化
+    # OK=最高報酬の初期化
     highest_reward = 0
     
-    # メイントレーニングループの開始
+    # OK=メイントレーニングループの開始
     for x in range(n_episodes):
         rospy.logdebug("############### START EPISODE => " + str(x))
-        # 積算報酬の初期化
+        # OK=積算報酬の初期化
         cumulated_reward = 0
         done = False
-        
-        # 探査率の減少
-        # 各エピソードごとに減少させていく
+
+        # OK=探査率の減少, 下限を0.05にする
         if qlearn.epsilon > 0.05:
             qlearn.epsilon *= epsilon_discount
         
-        # 環境のリセットと初期状態の取得
+        # OK=環境のリセットと初期状態の取得
         observation = env.reset()
 
-        # SOMの初期化
+        # OK=SOMの初期化
         n_side = 20  # 20×20の格子に変更
-        som_rl = som.SOM(n_side, learning_rate=0.75)
-        som_rl.initialize_weights(7)
+        n_vector = 7
+        som_rl = som.SOM(n_side,n_vector)
+        som_rl.initialize_weights()
         observation_vec = som_rl.transform(numpy.array(observation))
         state = ''.join(map(str, observation_vec))
 
-        # 初期状態量
+        # OK=初期状態量
         previous_obs = observation
 
         # CSVファイルに報酬を書き込む
@@ -95,6 +95,9 @@ if __name__ == '__main__':
         # SOMにかけた後の状態量を格納するlist
         obs_array = []
 
+        directory = '/media/usb1/som/' + str(x)
+        # ディレクトリが存在しない場合は作成
+        os.makedirs(directory, exist_ok=True)
         # 各エピソードでロボットをn_stepsテスト
         for i in range(n_steps):
             rospy.logwarn("############### Start Step => " + str(i))
@@ -111,11 +114,17 @@ if __name__ == '__main__':
             # 観測値の差分を計算
             diff_obs = numpy.array(observation) - numpy.array(previous_obs)
             diff_array.append(diff_obs)
+            with open(os.path.join(directory, 'array.csv'), 'a') as f:
+                writer = csv.writer(f)
+                writer.writerow(diff_obs)
 
             # 観測値に対してSOMをかける
             winner_index = som_rl.update_weights(numpy.array(observation), i, n_steps)
             observation_vec = som_rl.transform(numpy.array(observation))
             obs_array.append(observation_vec)
+            with open(os.path.join(directory, 'obs.csv'), 'a') as f:
+                writer = csv.writer(f)
+                writer.writerow(observation_vec)
             rospy.logwarn("observation_vec: " + str(observation_vec) + ", reward: " + str(reward))
 
             # 報酬の累積と更新
@@ -147,16 +156,9 @@ if __name__ == '__main__':
             "EP: {} - [alpha: {:.2f} - gamma: {:.2f} - epsilon: {:.2f}] - Reward: {} - Time: {:02d}:{:02d}:{:02d}".format(
                 x + 1, qlearn.alpha, qlearn.gamma, qlearn.epsilon, cumulated_reward, h, m, s))
         
-        with open('/mnt/usb/som/reward.csv', 'a') as f:
+        with open('/media/usb1/som/reward.csv', 'a') as f:
             writer = csv.writer(f)
             writer.writerow([cumulated_reward])
-        with open(os.path.join(directory, 'diff_obs.csv'), 'a') as f:
-            writer = csv.writer(f)
-            writer.writerow([diff_array])
-        with open(os.path.join(directory, 'obs.csv'), 'a') as f:
-            writer = csv.writer(f)
-            writer.writerow([obs_array])
-
 
             
     rospy.loginfo("|{}|{}|{}|{}|{}|{}| PICTURE |".format(n_episodes, qlearn.alpha, qlearn.gamma, initial_epsilon,
