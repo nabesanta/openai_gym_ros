@@ -76,7 +76,7 @@ if __name__ == '__main__':
 
         # OK=SOMの初期化
         n_side = 20  # 20×20の格子に変更
-        n_vector = 7
+        n_vector = 11
         som_rl = som.SOM(n_side,n_vector)
         som_rl.initialize_weights()
         observation_vec = som_rl.transform(numpy.array(observation))
