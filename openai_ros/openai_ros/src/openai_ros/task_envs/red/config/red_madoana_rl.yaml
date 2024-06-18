@@ -6,7 +6,7 @@ myrobot_1: #namespace
     # 測距センサ
     # 合成加速度、合成角速度
     # コンテナとの関係
-    n_observations: 5
+    n_observations: 11
     # Time to wait in the reset phases
     speed_step: 1.0
 

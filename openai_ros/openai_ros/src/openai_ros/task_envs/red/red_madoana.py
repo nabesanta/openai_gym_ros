@@ -107,8 +107,8 @@ class RedMadoanaEnv(red_env.RedEnv):
         self.robot_z = 0
 
         #~~~ 観測値のhighとlowを設定する ~~~
-        low = np.array([-np.inf, -np.inf, -np.inf, -np.inf, -np.inf, -np.inf, -np.inf])
-        high = np.array([np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf])
+        low = np.array([-np.inf, -np.inf, -np.inf, -np.inf, -np.inf, -np.inf, -np.inf, -np.inf, -np.inf, -np.inf, -np.inf])
+        high = np.array([np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf])
         self.observation_space = spaces.Box(low, high)
 
         #~~~ action patter ~~~
@@ -257,8 +257,16 @@ class RedMadoanaEnv(red_env.RedEnv):
         laser_left = Laser.pose.position.x
         laser_right = Laser.pose.position.y
         IMU = self.get_imu()
-        a = IMU.linear_acceleration.x
-        g = IMU.angular_velocity.x
+        # 合成加速度・合成角速度
+        # a = IMU.linear_acceleration.x
+        # g = IMU.angular_velocity.x
+        # 6-axis IMU
+        ax = IMU.linear_acceleration.x
+        ay = IMU.linear_acceleration.y
+        az = IMU.linear_acceleration.z
+        gx = IMU.angular_velocity.x
+        gy = IMU.angular_velocity.y
+        gz = IMU.angular_velocity.z
         position = self.get_odom()
         odom = position.pose.position.x
         odom_x = position.pose.position.y
@@ -273,7 +281,8 @@ class RedMadoanaEnv(red_env.RedEnv):
         # odom_array = [int(odom), int(odom_x), int(odom_y)]
         
         laser_array = [laser_left, laser_right]
-        imu_array = [a, g]
+        # imu_array = [a, g]
+        imu_array = [ax, ay, az, gx, gy, gz]
         odom_array = [odom, odom_x, odom_y]
 
         # We only want the X and Y position and the Yaw
@@ -297,8 +306,8 @@ class RedMadoanaEnv(red_env.RedEnv):
             current_position.pose.position.y = observations[-0]
             current_position.pose.position.z = 0.0
             # We see if it got to the desired point
-            if (current_position.pose.position.x == 4 and
-                current_position.pose.position.y == 4):
+            if (current_position.pose.position.x < 0.2 and
+                current_position.pose.position.y < 0.2):
                 self._episode_done = True
             else:
                 self._episode_done = False
@@ -316,17 +325,17 @@ class RedMadoanaEnv(red_env.RedEnv):
 
         # コンテナとの距離が近づいたら報酬を与える
         if not done:
-            if (current_position.pose.position.x == 100 or
-                current_position.pose.position.x == 101 or
-                current_position.pose.position.x == 102 or
-                current_position.pose.position.x == 103 ):
+            if (current_position.pose.position.x == 4 or
+                current_position.pose.position.x == 9 or
+                current_position.pose.position.x == 14 or
+                current_position.pose.position.x == 19 ):
                 reward = self.stuck_escape
                 self.stuck_escape *= -1
             else:
                 reward = 0
             
-            if (current_position.pose.position.y == 4 and
-                current_position.pose.position.z == 4):
+            if (current_position.pose.position.y < 0.2 and
+                current_position.pose.position.z  < 0.2):
                 reward = self.stuck_escape_container
                 self.stuck_escape_container *= -1
                 done = True
@@ -334,8 +343,8 @@ class RedMadoanaEnv(red_env.RedEnv):
                 reward = 0
 
         else:
-            if (current_position.pose.position.y == 4 and
-                current_position.pose.position.z == 4):
+            if (current_position.pose.position.y < 0.2 and
+                current_position.pose.position.z < 0.2):
                 reward = 1
             else:
                 reward = self.end_episode_points

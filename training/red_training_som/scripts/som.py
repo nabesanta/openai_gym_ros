@@ -25,6 +25,7 @@ class SOM:
         return arr
 
     def update_weights(self, input_vector, t, max_iter):
+        input_vector = self.handle_invalid_values(input_vector)  # input_vectorの無効な値を処理
         alpha = self.learning_rate * (1 - t / max_iter)
         bmu_idx = np.unravel_index(np.argmin(np.linalg.norm(input_vector - self.weight, axis=-1), axis=None),
                                    (self.n_side, self.n_side))
@@ -39,6 +40,7 @@ class SOM:
                 self.weight[x, y] += alpha * influence * diff
 
     def transform(self, input_vector):
+        input_vector = self.handle_invalid_values(input_vector)  # input_vectorの無効な値を処理
         bmu_idx = np.unravel_index(np.argmin(np.linalg.norm(input_vector - self.weight, axis=-1), axis=None),
                                    (self.n_side, self.n_side))
         bmu_pos = np.array(bmu_idx) / (self.n_side - 1)
@@ -52,6 +54,5 @@ class SOM:
         self.initialize_weights()
         for t in range(num_iterations):
             for input_vector in X:
-                input_vector = self.handle_invalid_values(input_vector)
+                input_vector = self.handle_invalid_values(input_vector)  # input_vectorの無効な値を処理
                 self.update_weights(input_vector, t, num_iterations)
-
