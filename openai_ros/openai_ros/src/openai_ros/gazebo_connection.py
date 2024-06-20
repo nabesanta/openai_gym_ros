@@ -141,7 +141,7 @@ class GazeboConnection():
         """
         # シミュレーション内の1ステップの時間: 0.01秒
         # この値を大きくしすぎるとレンダリングが間に合わない
-        self._time_step = Float64(0.02)
+        self._time_step = Float64(0.01)
         # 1秒間の最大更新数
         # 1秒間: 1000回更新
         self._max_update_rate = Float64(1000.0)

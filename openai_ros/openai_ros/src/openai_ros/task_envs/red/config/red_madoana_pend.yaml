@@ -1,0 +1,36 @@
+myrobot_1: #namespace
+    # ロボットの行動数
+    n_actions: 2
+    # 観測値
+    n_observations: 1
+    # Time to wait in the reset phases
+    speed_step: 1.0
+
+    # initialize
+    init_linear_forward_speed_high: 0.0 # Initial linear speed in which we start each episode
+    init_angular_speed_high: 0.0 # Angular speed when turning Left or Right
+
+    # action parameter 
+    linear_forward_speed_high: 0.5
+    angular_speed_high: 0.5 # Angular speed when turning Left or Right
+
+    # lidar/測距センサを使用する場合の設定
+    new_ranges: 5 # How many laser readings we jump in each observation reading, the bigger the less laser resolution
+    min_range: 0.5 # Minimum meters below wich we consider we have crashed
+    max_distance_value: 6 # Value considered Ok, no wall
+    min_distance_value: 0 # Value considered there is an obstacle or crashed
+
+    # コンテナの位置
+    desired_pose:
+      # x: 8.6740
+      # y: 0.5378
+      # z: 0.0633
+      x: 8.6740
+      y: 6.5378
+      z: 0.0633
+
+    # 報酬の設定
+    stuck_escape: 2
+    stuck_escape_container: 1
+    end_episode_points: -200   
+

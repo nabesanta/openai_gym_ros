@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>red_training_pend</name>
+  <version>0.0.0</version>
+  <description>The my_red_training package</description>
+
+  <maintainer email="michaelpabst2@todo.todo">maedalab</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <export>
+  </export>
+</package>

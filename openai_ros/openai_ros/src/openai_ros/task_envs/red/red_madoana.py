@@ -32,55 +32,31 @@ class RedMadoanaEnv(red_env.RedEnv):
         
         LoadYamlFileParamsTest(rospackage_name="openai_ros",
                                 rel_path_from_package_to_file="src/openai_ros/task_envs/red/config",
-                                yaml_file_name="red_madoana_rl.yaml")
+                                yaml_file_name="red_madoana_pend.yaml")
         
         super(RedMadoanaEnv, self).__init__(ros_ws_abspath)
         
         #~~~ Only variable needed to be set here ~~~
         # 行動空間の設定
-        # redの行動は14つ
+        # redの行動は2つ
         number_actions = rospy.get_param('/myrobot_1/n_actions')
         # gym.spaces.Discrete(n): 範囲[0、n-1]の離散値、Int型の数値
         self.action_space = spaces.Discrete(number_actions)
         
         self.reward_range = (-np.inf, np.inf)
 
-        """
-        We set the Observation space for the 10 observations
-        cube_observations = [
-            round(lx_acceleration, 1),
-            round(ly_acceleration, 1),
-            round(lz_acceleration, 1),
-            round(gx_acceleration, 1),
-            round(gy_acceleration, 1),
-            round(gz_acceleration, 1),
-            round(roll, 1),
-            round(pitch, 1),
-            round(yaw, 1),
-            round(rc_distance, 1),
-        ]
-        """
-
         # action
         self.dec_obs = rospy.get_param(
             "/myrobot_1/number_decimals_precision_obs", 1)
         self.linear_forward_speed_high = rospy.get_param(
             '/myrobot_1/linear_forward_speed_high')
-        self.linear_forward_speed_low = rospy.get_param(
-            '/myrobot_1/linear_forward_speed_low')
         self.angular_speed_high = rospy.get_param(
             '/myrobot_1/angular_speed_high')
-        self.angular_speed_low = rospy.get_param(
-            '/myrobot_1/angular_speed_low')
         # initialization
         self.init_linear_forward_speed_high = rospy.get_param(
             '/myrobot_1/init_linear_forward_speed_high')
-        self.init_linear_forward_speed_low = rospy.get_param(
-            '/myrobot_1/init_linear_forward_speed_low')
         self.init_angular_speed_high = rospy.get_param(
             '/myrobot_1/init_angular_speed_high')
-        self.init_angular_speed_low = rospy.get_param(
-            '/myrobot_1/init_angular_speed_low')
 
         # 観測値はロボットの位置、コンテナとの距離
         self.n_observations = rospy.get_param('/myrobot_1/n_observations')
@@ -92,13 +68,9 @@ class RedMadoanaEnv(red_env.RedEnv):
         #~~~ We create two arrays based on the binary values that will be assigned ~~~
         # In the discretization method.
         # ==== dist, odom ====
-        Laser = self.get_laser()
-        IMU = self.get_imu()
         position = self.get_odom()
 
         #~~~ imu, pose, dist, odom data ~~~
-        self.laser_frame = Laser.header.frame_id
-        self.imu_frame = IMU.header.frame_id
         self.position_frame = position.header.frame_id
 
         # robot positoion
@@ -107,8 +79,8 @@ class RedMadoanaEnv(red_env.RedEnv):
         self.robot_z = 0
 
         #~~~ 観測値のhighとlowを設定する ~~~
-        low = np.array([-np.inf, -np.inf, -np.inf, -np.inf, -np.inf, -np.inf, -np.inf, -np.inf, -np.inf, -np.inf, -np.inf])
-        high = np.array([np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf])
+        low = np.array([-np.inf])
+        high = np.array([np.inf])
         self.observation_space = spaces.Box(low, high)
 
         #~~~ action patter ~~~
@@ -151,8 +123,6 @@ class RedMadoanaEnv(red_env.RedEnv):
         # Set to false Done, because its calculated asyncronously
         self._episode_done = False
 
-        Laser = self.get_laser()
-        IMU = self.get_imu()
         position = self.get_odom()
 
         # We wait a small ammount of time to start everything because in very fast resets, laser scan values are sluggish
@@ -174,65 +144,11 @@ class RedMadoanaEnv(red_env.RedEnv):
         if action == 0:
             linear_speed = self.linear_forward_speed_high
             angular_speed = 0.0
-            self.last_action = "FORWARDS_HIGH"
+            self.last_action = "FORWARDS"
         elif action == 1:
-            linear_speed = self.linear_forward_speed_low
+            linear_speed = -self.linear_forward_speed_high
             angular_speed = 0.0
-            self.last_action = "FORWARDS_LOW"
-        # 右前進
-        elif action == 2: 
-            linear_speed = self.linear_forward_speed_low
-            angular_speed = self.angular_speed_high
-            self.last_action = "TURN_LEFT_HIGH"
-        elif action == 3:
-            linear_speed = self.linear_forward_speed_low
-            angular_speed = self.angular_speed_low
-            self.last_action = "TURN_LEFT_LOW"
-        # 左前進
-        elif action == 4:
-            linear_speed = self.linear_forward_speed_low
-            angular_speed = -1*self.angular_speed_high
-            self.last_action = "TURN_RIGHT_HIGH"
-        elif action == 5:
-            linear_speed = self.linear_forward_speed_low
-            angular_speed = -1*self.angular_speed_low
-            self.last_action = "TURN_RIGHT_LOW"
-        # 後退
-        elif action == 6:
-            linear_speed = -1*self.linear_forward_speed_high
-            angular_speed = 0.0
-            self.last_action = "BACKWARDS_HIGH"
-        elif action == 7:
-            linear_speed = -1*self.linear_forward_speed_low
-            angular_speed = 0.0
-            self.last_action = "BACKWARDS_LOW"
-        # 左後退
-        elif action == 8: 
-            linear_speed = -1*self.linear_forward_speed_low
-            angular_speed = self.angular_speed_high
-            self.last_action = "TURN_LEFT_BACK_HIGH"
-        elif action == 9:
-            linear_speed = -1*self.linear_forward_speed_low
-            angular_speed = self.angular_speed_low
-            self.last_action = "TURN_LEFT_BACK_LOW"
-        # 右後退
-        elif action == 10:
-            linear_speed = -1*self.linear_forward_speed_low
-            angular_speed = -1*self.angular_speed_high
-            self.last_action = "TURN_RIGHT_BACK_HIGH"
-        elif action == 11:
-            linear_speed = -1*self.linear_forward_speed_low
-            angular_speed = -1*self.angular_speed_low
-            self.last_action = "TURN_RIGHT_BACK_LOW"
-        # その場旋回
-        elif action == 12:
-            linear_speed = 0.0
-            angular_speed = self.angular_speed_high
-            self.last_action = "TURN_LEFT"
-        elif action == 13:
-            linear_speed = 0.0
-            angular_speed = -1*self.angular_speed_high
-            self.last_action = "TURN_RIGHT"
+            self.last_action = "BACKWORD"
 
         # We tell TurtleBot2 the linear and angular speed to set to execute
         self.move_base(linear_speed,
@@ -252,25 +168,8 @@ class RedMadoanaEnv(red_env.RedEnv):
         :return:
         """
         rospy.logdebug("Start Get Observation ==>")
-        # We get the odometry so that SumitXL knows where it is.
-        Laser = self.get_laser()
-        laser_left = Laser.pose.position.x
-        laser_right = Laser.pose.position.y
-        IMU = self.get_imu()
-        # 合成加速度・合成角速度
-        # a = IMU.linear_acceleration.x
-        # g = IMU.angular_velocity.x
-        # 6-axis IMU
-        ax = IMU.linear_acceleration.x
-        ay = IMU.linear_acceleration.y
-        az = IMU.linear_acceleration.z
-        gx = IMU.angular_velocity.x
-        gy = IMU.angular_velocity.y
-        gz = IMU.angular_velocity.z
         position = self.get_odom()
         odom = position.pose.position.x
-        odom_x = position.pose.position.y
-        odom_y = position.pose.position.z
         self.robot_x = position.pose.orientation.x
         self.robot_y = position.pose.orientation.y
         self.robot_z = position.pose.orientation.z
@@ -280,13 +179,10 @@ class RedMadoanaEnv(red_env.RedEnv):
         # imu_array = [int(a), int(g)]
         # odom_array = [int(odom), int(odom_x), int(odom_y)]
         
-        laser_array = [laser_left, laser_right]
-        # imu_array = [a, g]
-        imu_array = [ax, ay, az, gx, gy, gz]
-        odom_array = [odom, odom_x, odom_y]
+        odom_array = [odom]
 
         # We only want the X and Y position and the Yaw
-        observations = laser_array + imu_array + odom_array
+        observations = odom_array
 
         rospy.logdebug("Observations==>"+str(observations))
         rospy.logdebug("END Get Observation ==>")
@@ -302,12 +198,12 @@ class RedMadoanaEnv(red_env.RedEnv):
 
             # 現在のロボットの距離を見る
             current_position = PoseStamped()
-            current_position.pose.position.x = observations[-1]
-            current_position.pose.position.y = observations[-0]
+            current_position.pose.position.x = observations[-0]
+            current_position.pose.position.y = 0.0
             current_position.pose.position.z = 0.0
             # We see if it got to the desired point
-            if (current_position.pose.position.x < 0.2 and
-                current_position.pose.position.y < 0.2):
+            if (90 < abs(current_position.pose.position.x)):
+                print(abs(current_position.pose.position.x))
                 self._episode_done = True
             else:
                 self._episode_done = False
@@ -319,35 +215,20 @@ class RedMadoanaEnv(red_env.RedEnv):
 
         # 現在のロボットの距離を見る
         current_position = PoseStamped()
-        current_position.pose.position.x = observations[-2]
-        current_position.pose.position.y = observations[-1]
-        current_position.pose.position.z = observations[-0]
+        current_position.pose.position.x = observations[-0]
+        current_position.pose.position.y = 0.0
+        current_position.pose.position.z = 0.0
 
         # コンテナとの距離が近づいたら報酬を与える
         if not done:
-            if (current_position.pose.position.x == 4 or
-                current_position.pose.position.x == 9 or
-                current_position.pose.position.x == 14 or
-                current_position.pose.position.x == 19 ):
-                reward = self.stuck_escape
-                self.stuck_escape *= -1
+            if (abs(current_position.pose.position.x) < 90):
+                reward = -90+abs(current_position.pose.position.x)
             else:
-                reward = 0
-            
-            if (current_position.pose.position.y < 0.2 and
-                current_position.pose.position.z  < 0.2):
-                reward = self.stuck_escape_container
-                self.stuck_escape_container *= -1
-                done = True
-            else:
-                reward = 0
+                reward = abs(current_position.pose.position.x)-90
 
         else:
-            if (current_position.pose.position.y < 0.2 and
-                current_position.pose.position.z < 0.2):
-                reward = 1
-            else:
-                reward = self.end_episode_points
+            if (90 < current_position.pose.position.x):
+                reward = 100
         
         rospy.logdebug("reward=" + str(reward))
         self.cumulated_reward += reward

@@ -94,7 +94,7 @@ class RobotGazeboEnv(gym.Env):
         # sim_time_sleep_simulation = 0.5
         # real_time_factor = self.get_real_time_factor()
         # real_time_sleep = sim_time_sleep_simulation / real_time_factor
-        rospy.sleep(rospy.Duration(0.5))
+        rospy.sleep(rospy.Duration(0.2))
         
         # 状態変化に応じて、ステップ数を管理
         # initial_obs = self._get_obs()  # 初期観測値を取得
@@ -112,7 +112,7 @@ class RobotGazeboEnv(gym.Env):
         self.gazebo.pauseSim()    # シミュレーションを停止
         obs, position = self._get_obs()     # 観測値を取得
         # CSVファイルに報酬を書き込む
-        directory = '/media/usb1/som/' + str(self.episode_num-1)
+        directory = '/mnt/usb/pend/' + str(self.episode_num-1)
         # ディレクトリが存在しない場合は作成
         os.makedirs(directory, exist_ok=True)
         with open(os.path.join(directory, 'diff.csv'), 'a') as f:
