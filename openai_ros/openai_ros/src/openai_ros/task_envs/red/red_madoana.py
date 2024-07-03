@@ -182,6 +182,7 @@ class RedMadoanaEnv(red_env.RedEnv):
         odom_array = [odom]
 
         # We only want the X and Y position and the Yaw
+        # 4次元ベクトル
         observations = odom_array
 
         rospy.logdebug("Observations==>"+str(observations))
@@ -219,7 +220,6 @@ class RedMadoanaEnv(red_env.RedEnv):
         current_position.pose.position.y = 0.0
         current_position.pose.position.z = 0.0
 
-        # コンテナとの距離が近づいたら報酬を与える
         if not done:
             if (abs(current_position.pose.position.x) < 90):
                 reward = -90+abs(current_position.pose.position.x)

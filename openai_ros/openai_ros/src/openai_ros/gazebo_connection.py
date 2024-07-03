@@ -38,9 +38,6 @@ class GazeboConnection():
         self.reset_world_or_sim = reset_world_or_sim
         self.init_values()
 
-        # シミュレーションの一時停止
-        self.pauseSim()
-
     def pauseSim(self):
         """
         シミュレーションを一時停止する
