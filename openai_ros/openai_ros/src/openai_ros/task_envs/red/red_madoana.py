@@ -57,6 +57,7 @@ class RedMadoanaEnv(red_env.RedEnv):
             '/myrobot_1/init_linear_forward_speed_high')
         self.init_angular_speed_high = rospy.get_param(
             '/myrobot_1/init_angular_speed_high')
+        self.last_action = "None"
 
         # 観測値はロボットの位置、コンテナとの距離
         self.n_observations = rospy.get_param('/myrobot_1/n_observations')
@@ -141,14 +142,21 @@ class RedMadoanaEnv(red_env.RedEnv):
         rospy.logdebug("Start Set Action ==>"+str(action))
         # We convert the actions to speed movements to send to the parent class CubeSingleDiskEnv
         # 前進
-        if action == 0:
-            linear_speed = self.linear_forward_speed_high
-            angular_speed = 0.0
-            self.last_action = "FORWARDS"
-        elif action == 1:
-            linear_speed = -self.linear_forward_speed_high
+        # デフォルト値で初期化
+        linear_speed = 0.0
+        angular_speed = 0.0
+        if action == -1:
+            linear_speed = -0.5
             angular_speed = 0.0
             self.last_action = "BACKWORD"
+        elif action == 0:
+            linear_speed = 0.0
+            angular_speed = 0.0
+            self.last_action = "STOP"
+        elif action == 1:
+            linear_speed = 0.5
+            angular_speed = 0.0
+            self.last_action = "FORWORD"
 
         # We tell TurtleBot2 the linear and angular speed to set to execute
         self.move_base(linear_speed,
@@ -178,8 +186,8 @@ class RedMadoanaEnv(red_env.RedEnv):
         # laser_array = [int(laser_left), int(laser_right)]
         # imu_array = [int(a), int(g)]
         # odom_array = [int(odom), int(odom_x), int(odom_y)]
-        
-        odom_array = [odom]
+        # odom_array = [odom]
+        odom_array = [odom,self.robot_x,self.robot_y,self.robot_z]
 
         # We only want the X and Y position and the Yaw
         # 4次元ベクトル
@@ -199,7 +207,8 @@ class RedMadoanaEnv(red_env.RedEnv):
 
             # 現在のロボットの距離を見る
             current_position = PoseStamped()
-            current_position.pose.position.x = observations[-0]
+            current_position.pose.position.x = observations[0]
+            # current_position.pose.position.x = observations[-0]
             current_position.pose.position.y = 0.0
             current_position.pose.position.z = 0.0
             # We see if it got to the desired point
@@ -216,7 +225,8 @@ class RedMadoanaEnv(red_env.RedEnv):
 
         # 現在のロボットの距離を見る
         current_position = PoseStamped()
-        current_position.pose.position.x = observations[-0]
+        current_position.pose.position.x = observations[0]
+        # current_position.pose.position.x = observations[-0]
         current_position.pose.position.y = 0.0
         current_position.pose.position.z = 0.0
 
