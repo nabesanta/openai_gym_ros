@@ -57,21 +57,21 @@ class RobotGazeboEnv(gym.Env):
 
         rospy.logdebug("END init RobotGazeboEnv")
 
-    # def clock_callback(self, msg):
-    #     if self.sim_start_time is None:
-    #         self.sim_start_time = msg.clock
-    #     self.sim_time = msg.clock
+    def clock_callback(self, msg):
+        if self.sim_start_time is None:
+            self.sim_start_time = msg.clock
+        self.sim_time = msg.clock
 
-    # def get_real_time_factor(self):
-    #     if self.sim_time is None or self.sim_start_time is None:
-    #         return 1.0  # デフォルトのリアルタイムファクター
-    #     current_real_time = rospy.Time.now()
-    #     elapsed_real_time = (current_real_time - self.real_start_time).to_sec()
-    #     elapsed_sim_time = (self.sim_time - self.sim_start_time).to_sec()
-    #     if elapsed_real_time > 0:
-    #         return elapsed_sim_time / elapsed_real_time
-    #     else:
-    #         return 1.0
+    def get_real_time_factor(self):
+        if self.sim_time is None or self.sim_start_time is None:
+            return 1.0  # デフォルトのリアルタイムファクター
+        current_real_time = rospy.Time.now()
+        elapsed_real_time = (current_real_time - self.real_start_time).to_sec()
+        elapsed_sim_time = (self.sim_time - self.sim_start_time).to_sec()
+        if elapsed_real_time > 0:
+            return elapsed_sim_time / elapsed_real_time
+        else:
+            return 1.0
 
     # gym.Envの必須メソッド
     def seed(self, seed=None):
@@ -113,7 +113,6 @@ class RobotGazeboEnv(gym.Env):
         obs, position = self._get_obs()     # 観測値を取得
         # CSVファイルに報酬を書き込む
         directory = '/home/nabesanta/csv/pend/' + str(self.episode_num-1)
-        # ディレクトリが存在しない場合は作成
         os.makedirs(directory, exist_ok=True)
         with open(os.path.join(directory, 'diff.csv'), 'a') as f:
             writer = csv.writer(f)

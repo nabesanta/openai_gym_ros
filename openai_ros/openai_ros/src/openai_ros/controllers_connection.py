@@ -64,6 +64,7 @@ class ControllersConnection():
                                                     controllers_off=[])
             if result_on_ok:
                 rospy.logdebug("Controllers Reset ==> " + str(self.controllers_list))
+                rospy.logwarn("Controllers Reset ==> " + str(self.controllers_list))
                 reset_result = True
             else:
                 rospy.logdebug("result_on_ok ==> " + str(result_on_ok))

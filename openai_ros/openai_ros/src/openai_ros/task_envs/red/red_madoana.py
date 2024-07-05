@@ -146,7 +146,7 @@ class RedMadoanaEnv(red_env.RedEnv):
         linear_speed = 0.0
         angular_speed = 0.0
         if action == -1:
-            linear_speed = -0.5
+            linear_speed = -1.0
             angular_speed = 0.0
             self.last_action = "BACKWORD"
         elif action == 0:
@@ -154,7 +154,7 @@ class RedMadoanaEnv(red_env.RedEnv):
             angular_speed = 0.0
             self.last_action = "STOP"
         elif action == 1:
-            linear_speed = 0.5
+            linear_speed = 1.0
             angular_speed = 0.0
             self.last_action = "FORWORD"
 

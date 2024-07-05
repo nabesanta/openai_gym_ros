@@ -36,7 +36,8 @@ class GazeboConnection():
         self.set_physics = rospy.ServiceProxy(service_name, SetPhysicsProperties)
         self.start_init_physics_parameters = start_init_physics_parameters
         self.reset_world_or_sim = reset_world_or_sim
-        self.init_values()
+        # これが悪さしてる！！！！！！
+        # self.init_values()
 
     def pauseSim(self):
         """
