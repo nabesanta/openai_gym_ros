@@ -94,7 +94,7 @@ class RobotGazeboEnv(gym.Env):
         # sim_time_sleep_simulation = 0.5
         # real_time_factor = self.get_real_time_factor()
         # real_time_sleep = sim_time_sleep_simulation / real_time_factor
-        rospy.sleep(rospy.Duration(0.2))
+        rospy.sleep(rospy.Duration(0.1))
         
         # 状態変化に応じて、ステップ数を管理
         # initial_obs = self._get_obs()  # 初期観測値を取得
