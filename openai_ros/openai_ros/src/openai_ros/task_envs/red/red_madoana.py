@@ -145,16 +145,12 @@ class RedMadoanaEnv(red_env.RedEnv):
         # デフォルト値で初期化
         linear_speed = 0.0
         angular_speed = 0.0
-        if action == -1:
-            linear_speed = -1.0
-            angular_speed = 0.0
-            self.last_action = "BACKWORD"
-        elif action == 0:
-            linear_speed = 0.0
+        if action == 0:
+            linear_speed = -0.5
             angular_speed = 0.0
             self.last_action = "STOP"
         elif action == 1:
-            linear_speed = 1.0
+            linear_speed = 0.5
             angular_speed = 0.0
             self.last_action = "FORWORD"
 
@@ -212,7 +208,7 @@ class RedMadoanaEnv(red_env.RedEnv):
             current_position.pose.position.y = 0.0
             current_position.pose.position.z = 0.0
             # We see if it got to the desired point
-            if (90 < abs(current_position.pose.position.x)):
+            if (90 <= abs(current_position.pose.position.x)):
                 print(abs(current_position.pose.position.x))
                 self._episode_done = True
             else:
@@ -221,7 +217,7 @@ class RedMadoanaEnv(red_env.RedEnv):
         return self._episode_done
 
     #~~~ 報酬積算値の計算 ~~~
-    def _compute_reward(self, observations, done):
+    def _compute_reward(self, observations, done, step):
 
         # 現在のロボットの距離を見る
         current_position = PoseStamped()
@@ -232,13 +228,16 @@ class RedMadoanaEnv(red_env.RedEnv):
 
         if not done:
             if (abs(current_position.pose.position.x) < 90):
-                reward = -90+abs(current_position.pose.position.x)
+                # reward = -90+abs(current_position.pose.position.x)
+                reward = 0
             else:
-                reward = abs(current_position.pose.position.x)-90
-
+                reward = 1
+            if step == 10001:
+                reward = -1
         else:
             if (90 < current_position.pose.position.x):
-                reward = 100
+                reward = 1
+        
         
         rospy.logdebug("reward=" + str(reward))
         self.cumulated_reward += reward

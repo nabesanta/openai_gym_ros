@@ -48,6 +48,7 @@ class RobotGazeboEnv(gym.Env):
         # clockからreal time factorを取得
         self.sim_start_time = None
         self.real_start_time = rospy.Time.now()
+        self.step_num = 0
         # rospy.Subscriber('/clock', Clock, self.clock_callback)
 
         # シミュレーションを再開し、コントローラをリセットする
@@ -87,6 +88,7 @@ class RobotGazeboEnv(gym.Env):
         """
         rospy.logdebug("START STEP OpenAIROS")
 
+        self.step_num += 1
         self.gazebo.unpauseSim()  # シミュレーションを再開
         self._set_action(action)  # 行動を実行
         
@@ -94,7 +96,7 @@ class RobotGazeboEnv(gym.Env):
         # sim_time_sleep_simulation = 0.5
         # real_time_factor = self.get_real_time_factor()
         # real_time_sleep = sim_time_sleep_simulation / real_time_factor
-        rospy.sleep(rospy.Duration(0.1))
+        rospy.sleep(rospy.Duration(0.20))
         
         # 状態変化に応じて、ステップ数を管理
         # initial_obs = self._get_obs()  # 初期観測値を取得
@@ -119,7 +121,7 @@ class RobotGazeboEnv(gym.Env):
             writer.writerow([position, action])
         done = self._is_done(obs) # エピソード終了条件をチェック
         info = {}
-        reward = self._compute_reward(obs, done)  # 報酬を計算
+        reward = self._compute_reward(obs, done, self.step_num)  # 報酬を計算
         self.cumulated_episode_reward += reward  # 積算報酬を更新
 
         rospy.logdebug("END STEP OpenAIROS")
@@ -139,6 +141,7 @@ class RobotGazeboEnv(gym.Env):
         self._update_episode()      # エピソードを更新
         obs, position = self._get_obs()       # 初期観測値を取得
         rospy.logdebug("END Reseting RobotGazeboEnvironment")
+        self.step_num = 0
         return obs
 
     def close(self):
@@ -290,7 +293,7 @@ class RobotGazeboEnv(gym.Env):
         """
         raise NotImplementedError()
 
-    def _compute_reward(self, observations, done):
+    def _compute_reward(self, observations, done, step):
         """
         観測値に基づいて報酬を計算する（具体的な実装はサブクラスで行う）。
         """

@@ -37,7 +37,7 @@ class GazeboConnection():
         self.start_init_physics_parameters = start_init_physics_parameters
         self.reset_world_or_sim = reset_world_or_sim
         # これが悪さしてる！！！！！！
-        # self.init_values()
+        self.init_values()
 
     def pauseSim(self):
         """
@@ -142,7 +142,7 @@ class GazeboConnection():
         self._time_step = Float64(0.001)
         # 1秒間の最大更新数
         # 1秒間: 1000回更新
-        self._max_update_rate = Float64(1000.0)
+        self._max_update_rate = Float64(10000.0)
         self._real_time_update_rate = Float64(1000.0)
 
         self._gravity = Vector3()
@@ -158,7 +158,7 @@ class GazeboConnection():
         self._ode_config.sor_pgs_rms_error_tol = 0.0
         self._ode_config.contact_surface_layer = 0.001
         self._ode_config.contact_max_correcting_vel = 0.0
-        self._ode_config.cfm = 0.0
+        self._ode_config.cfm = 1e-6
         self._ode_config.erp = 0.2
         self._ode_config.max_contacts = 20
 

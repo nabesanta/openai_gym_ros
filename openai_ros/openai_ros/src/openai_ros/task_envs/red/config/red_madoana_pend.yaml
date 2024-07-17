@@ -11,8 +11,8 @@ myrobot_1: #namespace
   init_angular_speed_high: 0.0 # Angular speed when turning Left or Right
 
   # action parameter 
-  linear_forward_speed_high: 1.0
-  angular_speed_high: 1.0 # Angular speed when turning Left or Right
+  linear_forward_speed_high: 0.5
+  angular_speed_high: 0.5 # Angular speed when turning Left or Right
 
   # lidar/測距センサを使用する場合の設定
   new_ranges: 5 # How many laser readings we jump in each observation reading, the bigger the less laser resolution

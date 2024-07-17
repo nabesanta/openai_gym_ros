@@ -130,7 +130,7 @@ class RedEnv(robot_gazebo_env.RobotGazeboEnv):
         """
         raise NotImplementedError()
 
-    def _compute_reward(self, observations, done):
+    def _compute_reward(self, observations, done, step):
         """Calculates the reward to give based on the observations given.
         """
         raise NotImplementedError()
